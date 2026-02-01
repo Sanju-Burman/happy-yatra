@@ -1,70 +1,91 @@
-# Getting Started with Create React App
+# Happy Yatraa - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A premium, AI-powered travel recommendation platform built with React, Vite, and Tailwind CSS 4.
 
-## Available Scripts
+## 🚀 Tech Stack
 
-In the project directory, you can run:
+- **Framework**: [React 19](https://react.dev/)
+- **Build Tool**: [Vite](https://vite.dev/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) (CSS-first engine)
+- **UI Components**: [Shadcn/UI](https://ui.shadcn.com/) (built on Radix UI)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Theme Management**: [next-themes](https://github.com/pacocoursey/next-themes)
+- **API Client**: [Axios](https://axios-http.com/)
 
-### `npm start`
+## 📂 File Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```text
+frontend/
+├── src/
+│   ├── api.jsx           # Centralized API configuration and Axios interceptors
+│   ├── components/       # Reusable UI components (Navbar, DestinationCard, etc.)
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utility functions (utils.js for shadcn)
+│   ├── pages/            # Page-level components (Landing, Survey, Profile, etc.)
+│   ├── routes/           # Routing configuration (AllRoutes.jsx)
+│   ├── App.jsx           # Main application shell and layout
+│   ├── index.css         # Tailwind 4 configuration and global variables
+│   └── main.jsx          # Application entry point with Providers
+├── public/               # Static assets
+├── .env                  # Environment variables
+├── vite.config.js        # Vite & Tailwind 4 plugin configuration
+└── package.json          # Project dependencies and scripts
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🎨 Design System
 
-### `npm test`
+Happy Yatraa features a premium, modern design tailored for a seamless travel planning experience.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- **Typography**:
+  - **Headings**: `Playfair Display` (Serif) - Provides a sophisticated, editorial feel.
+  - **Body**: `DM Sans` (Sans-Serif) - Optimized for readability across all devices.
+- **Theme Support**:
+  - Built-in **Day/Night mode** toggle.
+  - Theme-aware styling using CSS variables (`--background`, `--foreground`, `--primary`, etc.).
+  - Sophisticated transitions and micro-animations using Framer Motion.
+- **Color Palette**:
+  - Primary: Warm terracotta/brown accents (`#A04B32`) reflecting Earth and travel.
+  - Backgrounds: Clean whites in light mode, deep slate/blacks in dark mode.
 
-### `npm run build`
+## 🔄 Application Flow
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1.  **Landing Page**: Interactive hero section and feature overview.
+2.  **Authentication**: Secure Signup and Login workflows.
+3.  **Survey**: Multi-step intuitive preference collector (Interests, Budget, Regions, Travel Style).
+4.  **AI Recommendations**: Personalized destination matches displayed on a responsive grid and interactive map.
+5.  **Profile**: Central hub to view saved destinations and travel preferences.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🛡️ Security & API
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- **JWT Authentication**: Access and Refresh tokens are securely managed.
+- **Axios Interceptors**:
+  - **Request**: Automatically attaches the `Authorization: Bearer <token>` header to outgoing requests.
+  - **Response**: Handles `401 Unauthorized` errors by automatically logging out the user or attempting a token refresh, ensuring a seamless session.
+- **Protected Routes**: Frontend routing logic ensures that sensitive pages (Survey, Recommendations, Profile) are only accessible to authenticated users.
+- **Defensive Coding**: All API-driven maps and lists include fallbacks and null-checks to prevent runtime crashes during data loading.
 
-### `npm run eject`
+## 🛠️ Setup & Installation
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1.  **Clone the repository**.
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+3.  **Configure environment variables**:
+    Create a `.env` file in the root directory:
+    ```env
+    VITE_Backend_API=http://localhost:9000/api
+    ```
+4.  **Run the development server**:
+    ```bash
+    npm run dev
+    ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📦 Deployment
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The project is configured for a standard Vite build process:
+```bash
+npm run build
+```
+The output will be in the `dist/` folder, ready for hosting on platforms like Vercel, Netlify, or AWS.

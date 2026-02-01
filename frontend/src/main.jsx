@@ -1,19 +1,15 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import { SurveyProvider } from './context/SurveyContext.jsx'
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "@/index.css";
+import App from "@/App";
 
+import { ThemeProvider } from "@/components/theme-provider";
 
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <SurveyProvider>
-      <App>
-        <ToastContainer position="top-center" autoClose={3000} />
-      </App>
-    </SurveyProvider>
-  </StrictMode>,
-)
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <React.StrictMode>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>,
+);

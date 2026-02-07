@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { submitSurvey } from '../api';
+import { submitSurvey } from '@/api';
 import { toast } from 'sonner';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -105,8 +105,8 @@ const Survey = () => {
                   data-testid={`interest-${interest.toLowerCase()}`}
                   onClick={() => handleInterestToggle(interest)}
                   className={`p-4 rounded-lg border-2 transition-all duration-300 font-medium ${formData.interests.includes(interest)
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-primary/50'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-foreground hover:border-primary/50'
                     }`}
                 >
                   {interest}
@@ -135,8 +135,8 @@ const Survey = () => {
                   data-testid={`budget-${budget}`}
                   onClick={() => setFormData({ ...formData, budget })}
                   className={`w-full p-6 rounded-lg border-2 transition-all duration-300 text-left ${formData.budget === budget
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border bg-background hover:border-primary/50'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border bg-background hover:border-primary/50'
                     }`}
                 >
                   <div className="font-semibold text-lg capitalize mb-1 text-foreground">{budget}</div>
@@ -171,8 +171,8 @@ const Survey = () => {
                   data-testid={`travel-style-${style.toLowerCase()}`}
                   onClick={() => setFormData({ ...formData, travel_style: style })}
                   className={`w-full p-6 rounded-lg border-2 transition-all duration-300 text-left font-medium text-lg ${formData.travel_style === style
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-primary/50'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-foreground hover:border-primary/50'
                     }`}
                 >
                   {style}
@@ -201,8 +201,8 @@ const Survey = () => {
                   data-testid={`past-travel-${region.toLowerCase().replace(' ', '-')}`}
                   onClick={() => handlePastTravelToggle(region)}
                   className={`p-4 rounded-lg border-2 transition-all duration-300 font-medium ${formData.past_travels.includes(region)
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-primary/50'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-card text-foreground hover:border-primary/50'
                     }`}
                 >
                   {region}

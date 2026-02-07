@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { signup } from '../api';
+import { signup } from '@/api';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';

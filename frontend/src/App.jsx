@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { getStoredUser, getStoredTokens } from './api';
-import Navbar from './components/Navbar';
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Survey from './pages/Survey';
-import Recommendations from './pages/Recommendations';
-import DestinationDetail from './pages/DestinationDetail';
-import Profile from './pages/Profile';
-import ThankYou from './pages/ThankYou';
+import { getStoredUser, getStoredTokens } from '@/api';
+import Navbar from '@/components/Navbar';
+import Landing from '@/pages/Landing';
+import Login from '@/pages/Login';
+import Signup from '@/pages/Signup';
+import Survey from '@/pages/Survey';
+import Recommendations from '@/pages/Recommendations';
+import DestinationDetail from '@/pages/DestinationDetail';
+import Profile from '@/pages/Profile';
+import ThankYou from '@/pages/ThankYou';
 import './App.css';
 
 function App() {

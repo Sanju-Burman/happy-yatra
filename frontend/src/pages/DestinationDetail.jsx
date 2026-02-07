@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDestination, saveDestination, unsaveDestination, getSavedDestinations } from '../api';
+import { getDestination, saveDestination, unsaveDestination, getSavedDestinations } from '@/api';
 import { toast } from 'sonner';
 import { MapPin, Heart, ArrowLeft, DollarSign, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
-import MapPlaceholder from '../components/MapPlaceholder';
+import MapPlaceholder from '@/components/MapPlaceholder';
 
 const DestinationDetail = () => {
   const { id } = useParams();
@@ -56,7 +56,7 @@ const DestinationDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Loading destination...</p>
+        <p className="text-muted-foreground">Loading destination...</p>
       </div>
     );
   }
@@ -64,7 +64,7 @@ const DestinationDetail = () => {
   if (!destination) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Destination not found</p>
+        <p className="text-muted-foreground">Destination not found</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ const DestinationDetail = () => {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-        
+
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
@@ -97,7 +97,7 @@ const DestinationDetail = () => {
           className="absolute top-8 right-8 bg-white/90 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all shadow-lg disabled:opacity-50"
         >
           <Heart
-            className={`w-6 h-6 ${isSaved ? 'fill-red-500 text-red-500' : 'text-secondary'}`}
+            className={`w-6 h-6 ${isSaved ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
             strokeWidth={1.5}
           />
         </button>
@@ -130,8 +130,8 @@ const DestinationDetail = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <h2 className="font-heading text-3xl font-bold text-secondary mb-4">About</h2>
-              <p className="text-gray-700 text-lg leading-relaxed mb-8">{destination.description}</p>
+              <h2 className="font-heading text-3xl font-bold text-foreground mb-4">About</h2>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-8">{destination.description}</p>
 
               <h3 className="font-heading text-2xl font-bold text-secondary mb-4">Location</h3>
               <MapPlaceholder destinations={[destination]} />
@@ -144,17 +144,17 @@ const DestinationDetail = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="bg-[#F2EFE9] p-8 rounded-xl sticky top-24"
+              className="bg-card p-8 rounded-xl sticky top-24 border border-border"
             >
-              <h3 className="font-heading text-2xl font-bold text-secondary mb-6">Details</h3>
-              
+              <h3 className="font-heading text-2xl font-bold text-foreground mb-6">Details</h3>
+
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <DollarSign className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                    <span className="font-medium text-gray-700">Budget Level</span>
+                    <span className="font-medium text-foreground">Budget Level</span>
                   </div>
-                  <span className="inline-block bg-white px-4 py-2 rounded-lg text-sm font-medium text-secondary capitalize">
+                  <span className="inline-block bg-muted px-4 py-2 rounded-lg text-sm font-medium text-foreground capitalize">
                     {destination.budget_level}
                   </span>
                 </div>
@@ -162,9 +162,9 @@ const DestinationDetail = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Tag className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                    <span className="font-medium text-gray-700">Category</span>
+                    <span className="font-medium text-foreground">Category</span>
                   </div>
-                  <span className="inline-block bg-white px-4 py-2 rounded-lg text-sm font-medium text-secondary">
+                  <span className="inline-block bg-muted px-4 py-2 rounded-lg text-sm font-medium text-foreground">
                     {destination.category}
                   </span>
                 </div>
@@ -172,13 +172,13 @@ const DestinationDetail = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                    <span className="font-medium text-gray-700">Best For</span>
+                    <span className="font-medium text-foreground">Best For</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {destination.best_for.map((tag, idx) => (
                       <span
                         key={idx}
-                        className="bg-white px-3 py-1 rounded-full text-xs font-medium text-secondary capitalize"
+                        className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-foreground capitalize"
                       >
                         {tag}
                       </span>

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getSavedDestinations, getProfile } from '../api';
+import { getSavedDestinations, getProfile } from '@/api';
 import { toast } from 'sonner';
 import { User, Heart, MapPin, Compass } from 'lucide-react';
 import { motion } from 'framer-motion';
-import DestinationCard from '../components/DestinationCard';
+import DestinationCard from '@/components/DestinationCard';
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);

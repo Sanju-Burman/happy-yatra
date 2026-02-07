@@ -88,4 +88,16 @@ The project is configured for a standard Vite build process:
 ```bash
 npm run build
 ```
-The output will be in the `dist/` folder, ready for hosting on platforms like Vercel, Netlify, or AWS.
+
+### 🛠️ Netlify/Linux Build Stability
+To ensure successful deployment on Linux-based environments (like Netlify):
+- **Native Modules**: Added `@rollup/rollup-linux-x64-gnu` to `optionalDependencies` in `package.json`.
+- **Case Sensitivity**: All imports are standardized to match the filesystem casing exactly.
+- **Explicit Extensions**: Imports for components and pages include the `.jsx` extension to avoid resolution errors on some build servers.
+
+## ⚙️ Technical Notes
+
+- **Path Aliases**: The project uses `@/` as an alias for the `src` directory.
+  - *Example*: `import Navbar from '@/components/Navbar.jsx';`
+- **Linting**: Run `npm run lint` to check for code quality and style issues.
+- **CSS Architecture**: Built with Tailwind CSS 4 using the new CSS-first engine. Global styles and variables are defined in `src/index.css`.

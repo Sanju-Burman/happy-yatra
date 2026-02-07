@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, MapPin } from 'lucide-react';
-import { saveDestination, unsaveDestination, getSavedDestinations } from '@/api';
+import { saveDestination, unsaveDestination, getSavedDestinations } from '@/api.jsx';
 import { toast } from 'sonner';
 
 const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {

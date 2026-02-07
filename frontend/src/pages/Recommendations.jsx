@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { getRecommendations } from '@/api';
+import { getRecommendations } from '@/api.jsx';
 import { toast } from 'sonner';
 import { Sparkles, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
-import DestinationCard from '@/components/DestinationCard';
-import MapPlaceholder from '@/components/MapPlaceholder';
+import DestinationCard from '@/components/DestinationCard.jsx';
+import MapPlaceholder from '@/components/MapPlaceholder.jsx';
 
 const Recommendations = () => {
   const [destinations, setDestinations] = useState([]);

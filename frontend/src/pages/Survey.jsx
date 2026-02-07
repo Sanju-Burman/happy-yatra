@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { submitSurvey } from '@/api';
+import { submitSurvey } from '@/api.jsx';
 import { toast } from 'sonner';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

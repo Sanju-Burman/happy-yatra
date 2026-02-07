@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
-import { getConfig } from '@/api';
+import { getConfig } from '@/api.jsx';
 
 const MapPlaceholder = ({ destinations = [] }) => {
   const [apiKey, setApiKey] = useState('');

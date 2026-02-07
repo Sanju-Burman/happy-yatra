@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Compass, User, LogOut, Sun, Moon } from 'lucide-react';
-import { logout } from '@/api';
+import { logout } from '@/api.jsx';
 import { toast } from 'sonner';
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/theme-provider.jsx';
 
 const Navbar = ({ user, setUser }) => {
   const navigate = useNavigate();

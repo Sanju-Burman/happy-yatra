@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, MapPin, Heart, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getDestinations } from '@/api';
-import DestinationCard from '@/components/DestinationCard';
+import { getDestinations } from '@/api.jsx';
+import DestinationCard from '@/components/DestinationCard.jsx';
 
 const Landing = ({ user }) => {
   const [trendingDestinations, setTrendingDestinations] = useState([]);

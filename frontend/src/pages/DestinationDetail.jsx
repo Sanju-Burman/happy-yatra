@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDestination, saveDestination, unsaveDestination, getSavedDestinations } from '@/api';
+import { getDestination, saveDestination, unsaveDestination, getSavedDestinations } from '@/api.jsx';
 import { toast } from 'sonner';
 import { MapPin, Heart, ArrowLeft, DollarSign, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
-import MapPlaceholder from '@/components/MapPlaceholder';
+import MapPlaceholder from '@/components/MapPlaceholder.jsx';
 
 const DestinationDetail = () => {
   const { id } = useParams();

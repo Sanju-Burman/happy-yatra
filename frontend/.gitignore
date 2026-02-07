@@ -69,3 +69,8 @@ coverage/
 
 # TypeScript declaration files
 *.d.ts
+
+# Project specific
+src_backup/
+build.log
+build_log.txt

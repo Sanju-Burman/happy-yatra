@@ -62,8 +62,8 @@ my-destination-platform/
 
 ```bash
 # Clone the repo
-git clone https://github.com/Sanju-Burman/B44_WEB_057
-cd B44_WEB_057
+git clone https://github.com/Sanju-Burman/happy-yatra
+cd happy-yatra
 
 # Install backend dependencies
 cd backend

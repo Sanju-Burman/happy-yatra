@@ -65,6 +65,8 @@ const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
           alt={destination.name}
           onLoad={() => setImageLoaded(true)}
           className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 lazy-image ${imageLoaded ? 'loaded' : ''}`}
+          loading="lazy"
+          decoding="async"
         />
 
         {/* Overlay Gradient */}

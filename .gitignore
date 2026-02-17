@@ -50,3 +50,8 @@ frontend/build.log
 frontend/build_log.txt
 git_files.txt
 git_status_full.txt
+
+# Project specific
+src_backup/
+build.log
+build_log.txt

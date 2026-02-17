@@ -29,9 +29,14 @@ const Landing = ({ user }) => {
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1732808460864-b8e5eb489a52?crop=entropy&cs=srgb&fm=jpg&q=85"
+            src="https://images.unsplash.com/photo-1732808460864-b8e5eb489a52?auto=format,compress&q=80&w=1200&fm=webp"
             alt="Hero Background"
             className="w-full h-full object-cover"
+            fetchpriority="high"
+            decoding="async"
+            loading="eager"
+            width="1200"
+            height="800"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-background"></div>
         </div>

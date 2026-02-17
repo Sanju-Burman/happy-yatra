@@ -68,14 +68,14 @@ const Landing = ({ user }) => {
                   <Link
                     to="/signup"
                     data-testid="hero-signup-button"
-                    className="bg-primary text-white rounded-full px-8 py-4 hover:bg-[#A04B32] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 font-medium tracking-wide inline-flex items-center gap-2"
+                    className="bg-primary text-primary-foreground rounded-full px-8 py-4 hover:bg-[#A04B32] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 font-medium tracking-wide inline-flex items-center gap-2"
                   >
                     Get Started <ArrowRight className="w-5 h-5" strokeWidth={2} />
                   </Link>
                   <Link
                     to="/login"
                     data-testid="hero-login-button"
-                    className="bg-transparent border-2 border-white text-white rounded-full px-8 py-4 hover:bg-white hover:text-secondary transition-all duration-300 font-medium tracking-wide"
+                    className="bg-transparent border-2 border-white text-white rounded-full px-8 py-4 hover:bg-[#A04B32] hover:text-secondary transition-all duration-300 font-medium tracking-wide"
                   >
                     Login
                   </Link>

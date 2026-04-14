@@ -43,9 +43,21 @@ const signup = async (username, email, password) => {
         email,
         password: hashPassword
     });
-
     await newUser.save();
-    return newUser;
+
+    const payload = { userId: newUser._id, email: newUser.email };
+    const accessToken = jwt.sign(
+        payload,
+        process.env.JWT_ACCESS_KEY,
+        { expiresIn: '1d' }
+    );
+    const refreshToken = jwt.sign(
+        payload,
+        process.env.JWT_REFRESH_KEY,
+        { expiresIn: '7d' }
+    );
+
+    return { newUser, payload, accessToken, refreshToken };
 };
 
 const refresh = async (refreshToken) => {

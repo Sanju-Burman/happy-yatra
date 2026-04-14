@@ -55,3 +55,4 @@ git_status_full.txt
 src_backup/
 build.log
 build_log.txt
+package-lock.json

@@ -139,7 +139,7 @@ export const getSavedDestinations = async () => {
 };
 
 export const getProfile = async () => {
-  const response = await axios.get(`${API}/profile`);
+  const response = await axios.get(`${API}/user/profile`);
   return response.data;
 };
 

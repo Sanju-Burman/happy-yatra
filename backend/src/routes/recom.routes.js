@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 // const { reccom } = require("../controllers/recom.controller");
-const { getDestination } = require("../controllers/destinations.controller");
+const { getDestinations, getDestinationById } = require("../controllers/destinations.controller");
 
 // router.post("/", reccom);
-router.get("/", getDestination);
+router.get("/", getDestinations);
+router.get("/:id", getDestinationById);
 module.exports = router;

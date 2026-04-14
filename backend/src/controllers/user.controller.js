@@ -3,7 +3,7 @@ const User = require('../models/user.model');
 const profileDetails = async (req, res) => {
     console.log("Request Params:", req.params);
     console.log("Request URL:", req.url);
-    const email = req.params.email;
+    const email = req.user?.email || req.params.email;
 
     if (!email) {
         return res.status(400).json({

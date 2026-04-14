@@ -2,7 +2,8 @@ const jwt = require('jsonwebtoken');
 const TokenBlacklist = require('../models/tokenBlocking.model');
 
 const verifyToken = async (req, res, next) => {
-    const token = req.headers["authorization"];
+    const authHeader = req.headers["authorization"];
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
     // console.log(token);
     if (!token) return res.status(401).json({ error: "Access denied, token require" });
     try {

@@ -30,17 +30,14 @@ const signup = async (req, res) => {
       return res.status(400).json({ message: "Username or name is required" });
     }
 
-    const newUser = await authService.signup(userToCreate, email, password);
+    const { newUser, payload, accessToken, refreshToken } = await authService.signup(userToCreate, email, password);
 
-    // Automatically log in after signup or return what frontend expects
-    // For now, let's at least return the user object to avoid 'data.user' being undefined
+    // Automatically log in after signup and return what frontend expects
     res.status(201).json({
       message: "User registered successfully",
-      user: {
-        id: newUser._id,
-        username: newUser.username,
-        email: newUser.email
-      }
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: payload
     });
   } catch (error) {
     res.status(500).json({

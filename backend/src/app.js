@@ -9,16 +9,33 @@ const connectDB = require('./config/db');
 
 const app = express();
 
-// Connect to Database
-connectDB();
+const allowedOrigins = (process.env.CORS_ORIGIN || '*')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
-// Middlewares
-app.use(cors({
-    origin: '*', // Allow all during debugging, recommend setting to frontend URL later
+const allowAllOrigins = allowedOrigins.includes('*');
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (allowAllOrigins || !origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
+    credentials: !allowAllOrigins
+};
+
+// Connect to Database
+connectDB().catch((error) => {
+    console.error('Database connection initialization failed:', error.message);
+});
+
+// Middlewares
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Routes
@@ -30,5 +47,18 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/survey', surveyRoutes);
 app.use('/api/destinations', recommendationRoutes);
+
+app.use((error, req, res, next) => {
+    const requestOrigin = req.headers.origin;
+    const responseOrigin = allowAllOrigins
+        ? '*'
+        : (requestOrigin && allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0] || '*');
+
+    res.setHeader('Access-Control-Allow-Origin', responseOrigin);
+    res.setHeader('Vary', 'Origin');
+    res.status(error.statusCode || 500).json({
+        message: error.message || 'Internal Server Error'
+    });
+});
 
 module.exports = app;

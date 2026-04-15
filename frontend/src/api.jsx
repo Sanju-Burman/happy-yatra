@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API = import.meta.env.VITE_Backend_API;
+const apiBase = import.meta.env.VITE_Backend_API || import.meta.env.VITE_BACKEND_API || 'http://localhost:9000/api';
+const API = apiBase.replace(/\/+$/, '');
 
 export const setAuthToken = (token) => {
   if (token) {

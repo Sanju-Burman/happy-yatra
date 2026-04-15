@@ -5,10 +5,20 @@ const authRoutes = require('./routes/auth.routes');
 const surveyRoutes = require('./routes/survey.routes');
 const recommendationRoutes = require('./routes/recom.routes');
 
+const connectDB = require('./config/db');
+
 const app = express();
 
+// Connect to Database
+connectDB();
+
 // Middlewares
-app.use(cors());
+app.use(cors({
+    origin: '*', // Allow all during debugging, recommend setting to frontend URL later
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(express.json());
 
 // Routes

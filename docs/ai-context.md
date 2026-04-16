@@ -1,0 +1,228 @@
+# Happy Yatra — AI Agent Context File
+> **Purpose**: Single-file reference for AI agents. Read this first. Do NOT scan the full codebase unless directed.
+
+---
+
+## 1. System Overview
+
+| Item | Value |
+|------|-------|
+| **Project** | Happy Yatra — Personalized Travel Destination Recommendation Platform |
+| **Type** | Full-stack (Node.js + React.js) |
+| **Runtime** | Node.js + Express.js |
+| **Database** | MongoDB Atlas (Mongoose ODM) |
+| **Auth** | JWT (Access Token 1d + Refresh Token 7d) + Token Blacklist |
+| **Deployment** | Backend → Vercel (`happyatra.vercel.app`), Frontend → Netlify (`happyyatra.netlify.app`) |
+| **Base API URL** | `https://happyatra.vercel.app/api` |
+
+---
+
+## 2. File Structure (Backend)
+
+```
+backend/
+├── vercel.json                  # Vercel deployment config (routes all to src/app.js)
+├── package.json
+└── src/
+    ├── server.js                # Entry point — starts HTTP server on PORT (default 9000)
+    ├── app.js                   # Express app — CORS, middleware, routes, global error handler
+    ├── config/
+    │   └── db.js                # mongoose.connect() using process.env.MONGO_DB
+    ├── models/
+    │   ├── user.model.js        # Collection: 'Users' — username, email, password, role
+    │   ├── destination.model.js # Collection: 'destinations' — name, imageUrl, averageCost, styles[], tags[], activities[], location, lat, lng
+    │   ├── surveyData.model.js  # Collection: 'Survey' — user(ref), travelStyle, budget, interests[], activities[]
+    │   └── tokenBlocking.model.js # Collection: 'TokenBlacklist' — token, type, expiresAt (TTL index)
+    ├── middlewares/
+    │   └── Auth.middleware.js   # verifyToken, adminChecks
+    ├── services/
+    │   └── auth.service.js      # login, signup, refresh, blacklistTokens
+    ├── controllers/
+    │   ├── auth.controller.js   # login, signup, logout, refresh
+    │   ├── user.controller.js   # profileDetails
+    │   ├── survey.controller.js # submitSurvey, getSurvey
+    │   ├── destinations.controller.js # getDestinations (paginated), getDestinationById
+    │   └── recom.controller.js  # DEPRECATED — all logic commented out
+    └── routes/
+        ├── auth.routes.js       # /api/auth/*
+        ├── user.routes.js       # /api/user/*
+        ├── survey.routes.js     # /api/survey/*
+        └── recom.routes.js      # /api/destinations/* (uses destinations.controller, not recom.controller)
+```
+
+---
+
+## 3. Key Entities & Schemas
+
+### User (`Users` collection)
+```js
+{ username: String, email: String(unique), password: String(bcrypt), role: 'user'|'admin' }
+```
+
+### Destination (`destinations` collection)
+```js
+{ name, imageUrl, averageCost(Number), styles[String], tags[String], activities[String], location, latitude, longitude, createdAt, updatedAt }
+```
+
+### Survey (`Survey` collection)
+```js
+{ user: ObjectId(ref:Users), travelStyle, budget(Number), interests[String], activities[String], createdAt }
+```
+
+### TokenBlacklist (`TokenBlacklist` collection)
+```js
+{ token: String, type: 'access'|'refresh', expiresAt: Date }
+// TTL index on expiresAt → auto-deletes expired blacklisted tokens
+```
+
+---
+
+## 4. API Contract Summary
+
+### Auth — `/api/auth`
+| Method | Path | Auth | Body | Response |
+|--------|------|------|------|----------|
+| POST | `/login` | ❌ | `{email, password}` | `{access_token, refresh_token, user:{userId,email}}` |
+| POST | `/signup` | ❌ | `{name\|username, email, password}` | `{message, access_token, refresh_token, user}` |
+| POST | `/logout` | ❌ | `{accessToken, refreshToken}` | `{message}` |
+| POST | `/refresh` | ❌ | `{refresh_token}` | `{access_token, refresh_token}` |
+| POST | `/data` | ✅ Bearer | — | `"protected page running"` |
+
+### User — `/api/user`
+| Method | Path | Auth | Response |
+|--------|------|------|----------|
+| GET | `/profile` | ✅ Bearer | `{user: {username, email, role}}` |
+
+### Survey — `/api/survey`
+| Method | Path | Auth | Body | Response |
+|--------|------|------|------|----------|
+| POST | `/` | ❌ | `{user:ObjectId, travelStyle, budget, interests[], activities[]}` | `{message}` |
+| GET | `/` | ❌ | — | `Survey[]` sorted by createdAt DESC |
+
+### Destinations — `/api/destinations`
+| Method | Path | Auth | Query Params | Response |
+|--------|------|------|------|----------|
+| GET | `/` | ❌ | `page`, `limit`, `trending=true` | `Destination[]` |
+| GET | `/:id` | ❌ | — | `Destination` |
+
+---
+
+## 5. Core Workflows
+
+### Auth Flow (Login)
+```
+Client → POST /api/auth/login {email, password}
+  → authService.login()
+    → User.findOne({email}) → bcrypt.compare()
+    → jwt.sign(payload, JWT_ACCESS_KEY, 1d) + jwt.sign(payload, JWT_REFRESH_KEY, 7d)
+  ← {access_token, refresh_token, user:{userId, email}}
+```
+
+### Auth Flow (Signup)
+```
+Client → POST /api/auth/signup {name|username, email, password}
+  → controller normalizes: username = req.body.username || req.body.name
+  → authService.signup()
+    → User.findOne({email}) → throw if exists
+    → bcrypt.hash(password, 10) → User.save()
+    → issue accessToken + refreshToken
+  ← 201 {message, access_token, refresh_token, user}
+```
+
+### Token Refresh
+```
+Client → POST /api/auth/refresh {refresh_token}
+  → TokenBlacklist.findOne(token) → reject if blacklisted
+  → jwt.verify(token, JWT_REFRESH_KEY) → decode
+  → jwt.sign(new accessToken, JWT_ACCESS_KEY, 1d)
+  ← {access_token, refresh_token (same)}
+```
+
+### Logout (Token Blacklisting)
+```
+Client → POST /api/auth/logout {accessToken, refreshToken}
+  → jwt.decode both tokens → extract exp
+  → TokenBlacklist.create([{access}, {refresh}])
+  ← {message: 'Logout successful'}
+  // MongoDB TTL index auto-purges expired entries
+```
+
+### Protected Route Request
+```
+Client → GET /api/user/profile
+  Header: Authorization: Bearer <accessToken>
+  → verifyToken middleware:
+      1. Extract token from "Bearer <token>"
+      2. TokenBlacklist.findOne(token) → 401 if blacklisted
+      3. jwt.verify(token, JWT_ACCESS_KEY) → 401 if expired/invalid
+      4. req.user = decoded → next()
+  → profileController: User.findOne({email: req.user.email})
+  ← {user}
+```
+
+### Destinations Fetch (Paginated)
+```
+Client → GET /api/destinations?page=1&limit=12&trending=true
+  → getDestinations():
+      page = req.query.page || 1
+      limit = req.query.limit || 12
+      baseQuery = trending=true ? {trending:true} : {}
+      Destination.find(baseQuery).skip((page-1)*limit).limit(limit)
+  ← Destination[]
+```
+
+---
+
+## 6. Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `PORT` | HTTP server port (default: 9000) |
+| `MONGO_DB` | MongoDB Atlas connection string |
+| `JWT_ACCESS_KEY` | Secret key for access token signing |
+| `JWT_REFRESH_KEY` | Secret key for refresh token signing |
+| `CORS_ORIGIN` | Comma-separated allowed origins (use `*` for all) |
+
+---
+
+## 7. Important Constraints & Rules
+
+1. **Token Storage**: Tokens are NOT stored server-side except in the blacklist on logout.
+2. **Refresh token is NOT rotated** on refresh — same refresh token is returned.
+3. **`recom.controller.js` is fully commented out** — dead code. Route `/api/destinations` uses `destinations.controller.js` instead.
+4. **Survey is unauthenticated** — `POST /api/survey` does NOT require JWT. User ObjectId is expected in the body.
+5. **Access token expiry: 1 day**, Refresh token expiry: **7 days**.
+6. **Admin role exists** in User model and `adminChecks` middleware exists, but NO admin-protected routes are currently wired.
+7. **`trending` field** is referenced in `destinations.controller.js` but **NOT defined in destination.model.js** — this is a schema gap.
+8. **CORS**: When `CORS_ORIGIN=*`, `credentials` is set to `false`. When restricted, credentials are allowed.
+9. **Vercel** routes all traffic to `src/app.js` (not `server.js`).
+10. **Signup accepts both `name` and `username`** fields (frontend sends `name`, model uses `username`).
+
+---
+
+## 8. Tech Stack Quick Reference
+
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Node.js |
+| Framework | Express.js 4.x |
+| ODM | Mongoose 8.x |
+| Auth | jsonwebtoken 9.x + bcrypt 5.x |
+| DB | MongoDB Atlas |
+| Config | dotenv |
+| Dev | nodemon |
+| Deploy | Vercel (backend), Netlify (frontend) |
+
+---
+
+## 9. Known Issues / Technical Debt
+
+| Issue | Location | Severity |
+|-------|----------|----------|
+| `trending` field queried but not in schema | `destinations.controller.js` + `destination.model.js` | Medium |
+| `recom.controller.js` is dead code | `controllers/recom.controller.js` | Low |
+| Survey endpoint has no auth guard | `survey.routes.js` | Medium |
+| Refresh token not rotated on refresh | `auth.service.js:refresh()` | Medium |
+| No pagination metadata returned | `destinations.controller.js` | Low |
+| `getSurvey` is unauthenticated | `survey.routes.js` | High |
+| No input validation library | All controllers | Medium |

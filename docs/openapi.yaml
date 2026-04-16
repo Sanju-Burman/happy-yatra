@@ -1,0 +1,659 @@
+openapi: "3.0.3"
+info:
+  title: Happy Yatra API
+  description: |
+    REST API for **Happy Yatra** — a personalized travel destination recommendation platform.
+
+    ## Authentication
+    Protected routes require a Bearer JWT token in the `Authorization` header:
+    ```
+    Authorization: Bearer <access_token>
+    ```
+    Obtain tokens via `/api/auth/login` or `/api/auth/signup`.
+
+    ## Token Lifecycle
+    - **Access Token**: expires in **1 day**
+    - **Refresh Token**: expires in **7 days**
+    - Tokens are invalidated server-side via the **Token Blacklist** on logout.
+  version: "1.0.0"
+  contact:
+    name: Happy Yatra
+    url: https://happyyatra.netlify.app
+
+servers:
+  - url: https://happyatra.vercel.app/api
+    description: Production (Vercel)
+  - url: http://localhost:9000/api
+    description: Local Development
+
+tags:
+  - name: Auth
+    description: Authentication — signup, login, logout, token refresh
+  - name: User
+    description: Authenticated user profile operations
+  - name: Destinations
+    description: Travel destination catalog — public endpoint
+  - name: Survey
+    description: User travel preference survey
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT Access Token. Obtain from /api/auth/login or /api/auth/signup."
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "64abc123def456ghi789jkl"
+        username:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [user, admin]
+          example: "user"
+
+    TokenPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: "64abc123def456ghi789jkl"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token (expires in 1 day)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          description: JWT refresh token (expires in 7 days)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: "#/components/schemas/TokenPayload"
+
+    Destination:
+      type: object
+      required:
+        - name
+        - imageUrl
+        - averageCost
+        - styles
+        - tags
+        - activities
+        - location
+        - latitude
+        - longitude
+      properties:
+        _id:
+          type: string
+          example: "64xyz789abc123def456ghi"
+        name:
+          type: string
+          example: "Goa"
+        imageUrl:
+          type: string
+          format: uri
+          example: "https://example.com/goa.jpg"
+        averageCost:
+          type: number
+          minimum: 0
+          example: 15000
+          description: Average cost in INR
+        styles:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          example: ["beach", "relaxation"]
+        tags:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          example: ["tropical", "coastal"]
+        activities:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          example: ["surfing", "sightseeing"]
+        location:
+          type: string
+          example: "Goa, India"
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+          example: 15.2993
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+          example: 74.1240
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Survey:
+      type: object
+      required:
+        - user
+        - travelStyle
+        - budget
+      properties:
+        _id:
+          type: string
+        user:
+          type: string
+          description: MongoDB ObjectId referencing the Users collection
+          example: "64abc123def456ghi789jkl"
+        travelStyle:
+          type: string
+          example: "adventure"
+        budget:
+          type: number
+          example: 30000
+        interests:
+          type: array
+          items:
+            type: string
+          default: []
+          example: ["nature", "culture"]
+        activities:
+          type: array
+          items:
+            type: string
+          default: []
+          example: ["hiking", "photography"]
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Human-readable error message"
+        error:
+          type: string
+          description: Technical error detail (optional)
+          example: "Invalid email or password"
+
+paths:
+  # ─── AUTH ────────────────────────────────────────────────────────────────────
+
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: |
+        Register a new user. On success, tokens are immediately issued (auto-login).
+        Accepts either `name` or `username` field — both are normalized to `username` in the DB.
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                  description: "Maps to `username` in DB. Either `name` or `username` is accepted."
+                username:
+                  type: string
+                  example: "johndoe"
+                  description: "Alternative to `name`."
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  minLength: 6
+                  example: "securepassword123"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/AuthResponse"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "User registered successfully"
+        "400":
+          description: Name/username field missing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Username or name is required"
+        "500":
+          description: Registration failed (e.g., email already exists)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Registration failed"
+                error: "User already exists"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      description: Authenticate with email and password. Returns access and refresh tokens.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "securepassword123"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Login failed"
+                error: "Invalid email or password"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      description: |
+        Exchange a valid refresh token for a new access token.
+        **Note**: The refresh token is NOT rotated — the same refresh token is returned.
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        "200":
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                    description: Same refresh token (not rotated)
+        "401":
+          description: Invalid or blacklisted refresh token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      description: |
+        Invalidates both access and refresh tokens by adding them to the blacklist.
+        MongoDB TTL index automatically removes expired blacklist entries — no cleanup needed.
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accessToken, refreshToken]
+              properties:
+                accessToken:
+                  type: string
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logout successful"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/data:
+    post:
+      tags: [Auth]
+      summary: Test protected route
+      description: A test endpoint to verify a bearer token is valid and not blacklisted.
+      operationId: testProtected
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "protected page running"
+        "401":
+          description: Token missing, expired, or blacklisted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ─── USER ─────────────────────────────────────────────────────────────────────
+
+  /user/profile:
+    get:
+      tags: [User]
+      summary: Get authenticated user profile
+      description: |
+        Returns the full profile of the currently authenticated user.
+        Email is extracted from the JWT payload, not from query params.
+
+        **Warning**: Response includes the full user document; password hash is stored but bcrypt-hashed.
+      operationId: getProfile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Email not resolvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Email parameter is required"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found in database
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "User not found"
+        "500":
+          description: Database error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ─── DESTINATIONS ─────────────────────────────────────────────────────────────
+
+  /destinations:
+    get:
+      tags: [Destinations]
+      summary: Get paginated destinations
+      description: |
+        Fetch a paginated list of travel destinations.
+        Use `trending=true` to filter trending destinations.
+
+        **Warning**: No pagination metadata (total count, totalPages) is returned in the response.
+      operationId: getDestinations
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          example: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            default: 12
+            minimum: 1
+            maximum: 100
+          example: 12
+        - name: trending
+          in: query
+          description: Filter to only trending destinations
+          schema:
+            type: string
+            enum: ["true", "false"]
+          example: "true"
+      responses:
+        "200":
+          description: Array of destinations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Destination"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Server Error on get Destinations"
+
+  /destinations/{id}:
+    get:
+      tags: [Destinations]
+      summary: Get destination by ID
+      description: Fetch a single destination document by its MongoDB ObjectId.
+      operationId: getDestinationById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: MongoDB ObjectId of the destination
+          schema:
+            type: string
+          example: "64xyz789abc123def456ghi"
+      responses:
+        "200":
+          description: Destination found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Destination"
+        "400":
+          description: Malformed ObjectId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Invalid destination id format"
+        "404":
+          description: Destination not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Destination not found"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ─── SURVEY ───────────────────────────────────────────────────────────────────
+
+  /survey:
+    post:
+      tags: [Survey]
+      summary: Submit travel preference survey
+      description: |
+        Submit travel preferences tied to a user ObjectId.
+
+        **Warning**: This endpoint is currently unauthenticated. The `user` ObjectId
+        is trusted from the request body without server-side verification of identity
+        or existence of the referenced user.
+      operationId: submitSurvey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user, travelStyle, budget]
+              properties:
+                user:
+                  type: string
+                  description: Valid MongoDB ObjectId referencing a user
+                  example: "64abc123def456ghi789jkl"
+                travelStyle:
+                  type: string
+                  example: "adventure"
+                budget:
+                  type: number
+                  example: 30000
+                interests:
+                  type: array
+                  items:
+                    type: string
+                  default: []
+                  example: ["nature", "culture"]
+                activities:
+                  type: array
+                  items:
+                    type: string
+                  default: []
+                  example: ["hiking", "photography"]
+      responses:
+        "201":
+          description: Survey submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Survey submitted successfully"
+        "400":
+          description: Invalid user ObjectId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Invalid user ID"
+        "500":
+          description: Database error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Failed to submit survey"
+
+    get:
+      tags: [Survey]
+      summary: Get all surveys
+      description: |
+        Retrieve all survey submissions sorted by newest first.
+
+        **Warning**: This endpoint is currently unauthenticated and exposes all user survey data.
+        It should be restricted to admin users only.
+      operationId: getSurveys
+      responses:
+        "200":
+          description: Array of survey submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Survey"
+        "500":
+          description: Database error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Failed to fetch survey data"

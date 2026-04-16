@@ -133,7 +133,6 @@
         @apply bg-background text-foreground;
         font-family: 'DM Sans', sans-serif;
         -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
         margin: 0;
         position: relative;
     }

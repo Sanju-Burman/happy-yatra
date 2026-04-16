@@ -1,0 +1,352 @@
+# Happy Yatra — Workflows & Processing Logic
+
+---
+
+## 1. Authentication Workflows
+
+### 1.1 Signup Flow
+
+```
+Client (React)                 Express Server                  MongoDB Atlas
+─────────────                  ──────────────                  ─────────────
+POST /api/auth/signup
+  {name, email, password}
+         │
+         ▼
+  auth.routes.js
+  router.post('/signup', signup)
+         │
+         ▼
+  auth.controller.js :: signup()
+  ├─ Normalize username = body.username || body.name
+  ├─ Validate: username required → 400 if missing
+  │
+  └─► auth.service.js :: signup(username, email, password)
+         │
+         ├─► User.findOne({email})  ──────────────────────────► MongoDB
+         │       ◄ null (new user) ◄───────────────────────────
+         │   OR throw "User already exists" → 500
+         │
+         ├─ bcrypt.genSalt(10) → bcrypt.hash(password, salt)
+         │
+         ├─► User.save({username, email, hashedPassword})  ───► MongoDB (INSERT)
+         │       ◄ newUser ◄────────────────────────────────────
+         │
+         ├─ jwt.sign({userId, email}, JWT_ACCESS_KEY, '1d')
+         ├─ jwt.sign({userId, email}, JWT_REFRESH_KEY, '7d')
+         │
+         ◄─── {newUser, payload, accessToken, refreshToken}
+         │
+  res.status(201).json({
+    message: "User registered successfully",
+    access_token, refresh_token, user
+  })
+```
+
+---
+
+### 1.2 Login Flow
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+POST /api/auth/login
+  {email, password}
+         │
+         ▼
+  auth.controller.js :: login()
+         │
+         └─► auth.service.js :: login(email, password)
+                │
+                ├─► User.findOne({email})  ──────────────────► MongoDB
+                │       ◄ user ◄──────────────────────────────
+                │   OR throw "Invalid email or password" → 401
+                │
+                ├─ bcrypt.compare(password, user.password)
+                │   OR throw "Invalid email or password" → 401
+                │
+                ├─ Build payload: {userId, email}
+                ├─ jwt.sign(payload, JWT_ACCESS_KEY, '1d')
+                ├─ jwt.sign(payload, JWT_REFRESH_KEY, '7d')
+                │
+                ◄── {payload, accessToken, refreshToken}
+                │
+  res.status(200).json({
+    access_token, refresh_token, user: payload
+  })
+```
+
+---
+
+### 1.3 Token Refresh Flow
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+POST /api/auth/refresh
+  {refresh_token}
+         │
+         ▼
+  auth.controller.js :: refresh()
+         │
+         └─► auth.service.js :: refresh(refreshToken)
+                │
+                ├─ Guard: throw if !refreshToken → 401
+                │
+                ├─► TokenBlacklist.findOne({token})  ────────► MongoDB
+                │       ◄ null (not blacklisted) ◄────────────
+                │   OR throw "Invalid token" → 401
+                │
+                ├─ jwt.verify(token, JWT_REFRESH_KEY)
+                │   ├── err: throw "Invalid refresh token" → 401
+                │   └── decoded: {userId, email}
+                │
+                ├─ jwt.sign({userId, email}, JWT_ACCESS_KEY, '1d')
+                │
+                ◄── {accessToken}
+                │
+  res.status(200).json({
+    access_token: new token,
+    refresh_token: SAME refresh_token (not rotated)
+  })
+```
+
+---
+
+### 1.4 Logout & Token Blacklisting Flow
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+POST /api/auth/logout
+  {accessToken, refreshToken}
+         │
+         ▼
+  auth.controller.js :: logout()
+         │
+         └─► auth.service.js :: blacklistTokens(access, refresh)
+                │
+                ├─ jwt.decode(accessToken) → {exp: timestamp}
+                ├─ jwt.decode(refreshToken) → {exp: timestamp}
+                │
+                ├─► TokenBlacklist.create([
+                │       {token: accessToken, type: 'access', expiresAt: new Date(exp*1000)},
+                │       {token: refreshToken, type: 'refresh', expiresAt: new Date(exp*1000)}
+                │   ])  ──────────────────────────────────────► MongoDB (INSERT x2)
+                │       ◄──────────────────── OK ◄─────────────
+                │
+  res.status(200).json({message: "Logout successful"})
+
+  [MongoDB TTL Index]
+  MongoDB automatically deletes documents where expiresAt <= now
+  → No manual cleanup job needed
+```
+
+---
+
+### 1.5 Protected Route Request Flow (verifyToken Middleware)
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+ANY Protected Request
+  Authorization: Bearer <token>
+         │
+         ▼
+  Auth.middleware.js :: verifyToken()
+  │
+  ├─ Extract token from "Authorization" header
+  │   "Bearer <token>" → token
+  │   OR raw header value if no "Bearer " prefix
+  │
+  ├─ Guard: !token → 401 "Access denied, token require"
+  │
+  ├─► TokenBlacklist.findOne({token})  ─────────────────────► MongoDB
+  │       ◄ null (not blacklisted) ◄───────────────────────────
+  │   OR → 401 "blacklisted token"
+  │
+  ├─ jwt.verify(token, JWT_ACCESS_KEY, callback)
+  │   ├── TokenExpiredError → 401 "Token expired"
+  │   ├── Other error → 401 "Invalid token in verifying"
+  │   └── Success: req.user = decoded payload {userId, email}
+  │
+  └─► next()  →  Controller
+```
+
+---
+
+## 2. Destination Workflows
+
+### 2.1 Paginated Destination Fetch
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+GET /api/destinations
+  ?page=2&limit=12&trending=true
+         │
+         ▼
+  destinations.controller.js :: getDestinations()
+  │
+  ├─ page = parseInt(query.page) || 1       → 2
+  ├─ limit = parseInt(query.limit) || 12    → 12
+  ├─ skip = (page - 1) * limit             → 12
+  │
+  ├─ Build baseQuery:
+  │   query.trending === 'true' ? {trending: true} : {}
+  │
+  ├─► Destination.find({trending:true}).skip(12).limit(12) ─► MongoDB
+  │       ◄ Destination[] ◄───────────────────────────────────
+  │
+  res.status(200).json(destinations)
+  ⚠️ No total count or pagination metadata returned
+```
+
+### 2.2 Single Destination Fetch
+
+```
+GET /api/destinations/:id
+         │
+  destinations.controller.js :: getDestinationById()
+  │
+  ├─ mongoose.Types.ObjectId.isValid(req.params.id)
+  │   FALSE → 400 "Invalid destination id format"
+  │
+  ├─► Destination.findById(id) ─────────────────────────────► MongoDB
+  │       ◄ destination | null ◄───────────────────────────────
+  │   null → 404 "Destination not found"
+  │
+  res.status(200).json(destination)
+```
+
+---
+
+## 3. Survey Workflow
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+POST /api/survey
+  {user: ObjectId, travelStyle, budget, interests[], activities[]}
+         │
+         ▼
+  survey.controller.js :: submitSurvey()
+  │
+  ├─ mongoose.Types.ObjectId.isValid(req.body.user)
+  │   INVALID → 400 "Invalid user ID"
+  │
+  ├─ new Survey(req.body) → survey.save() ──────────────────► MongoDB (INSERT)
+  │       ◄ saved doc ◄──────────────────────────────────────
+  │
+  res.status(201).json({message: "Survey submitted successfully"})
+
+⚠️ No authentication required. User ObjectId comes from client — not verified server-side.
+⚠️ No validation that the referenced user actually exists.
+```
+
+---
+
+## 4. User Profile Workflow
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+GET /api/user/profile
+  Authorization: Bearer <token>
+         │
+         ▼
+  [verifyToken middleware]
+  → req.user = {userId, email}
+         │
+         ▼
+  user.controller.js :: profileDetails()
+  │
+  ├─ email = req.user?.email || req.params.email
+  │   null → 400 "Email parameter is required"
+  │
+  ├─► User.findOne({email}) ────────────────────────────────► MongoDB
+  │       ◄ user | null ◄──────────────────────────────────────
+  │   null → 404 "User not found"
+  │
+  res.status(200).json({user})
+  ⚠️ Returns full user document including hashed password
+```
+
+---
+
+## 5. Background Processing & TTL Jobs
+
+### MongoDB TTL Index (Token Auto-Expiry)
+- **Collection**: `TokenBlacklist`
+- **Index**: `{expiresAt: 1}` with `expireAfterSeconds: 0`
+- **Behavior**: MongoDB's background TTL monitor runs every ~60 seconds and automatically deletes documents where `expiresAt` has passed.
+- **Effect**: Blacklisted tokens are automatically cleaned up — no cron job or manual process needed.
+
+```javascript
+tokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+```
+
+---
+
+## 6. Module Interaction Map
+
+```
+             ┌────────────────────────────────────┐
+             │         HTTP Request               │
+             └──────────────┬─────────────────────┘
+                            │
+                  ┌─────────▼──────────┐
+                  │   Route Module      │ (auth/user/survey/recom routes)
+                  └─────────┬──────────┘
+                            │ applies middleware chain
+                  ┌─────────▼──────────┐
+                  │  Auth Middleware    │ verifyToken → adminChecks
+                  │ (optional per route)│
+                  └─────────┬──────────┘
+                            │
+                  ┌─────────▼──────────┐
+                  │    Controller       │ Parses req, formats res
+                  └─────────┬──────────┘
+                            │ calls
+               ┌────────────┴──────────────┐
+               │                           │
+    ┌──────────▼──────────┐   ┌────────────▼────────────┐
+    │   Service Layer      │   │    Model (direct call)  │
+    │  (auth.service.js)   │   │  (User, Destination,    │
+    │  Business logic      │   │   Survey model)         │
+    └──────────┬───────────┘   └────────────┬────────────┘
+               │                            │
+               └──────────┬─────────────────┘
+                          │ Mongoose ODM
+                ┌─────────▼──────────┐
+                │    MongoDB Atlas    │
+                └────────────────────┘
+```
+
+---
+
+## 7. Data Flow: Recommendation Engine (Current vs Intended)
+
+### Current State (Functional)
+- Destinations are stored in MongoDB with `styles[]`, `tags[]`, `activities[]`, `averageCost` fields.
+- Client fetches all and filters client-side, OR uses `trending=true` to filter server-side.
+- `recom.controller.js` is fully **commented out** — its filter logic does NOT run.
+
+### Original Intent (Commented-Out Logic)
+```javascript
+// POST /api/destinations — Body: {travelStyle, budget, interests[], activities[]}
+const matches = destinations.filter(dest => {
+    const matchesStyle = dest.styles.includes(travelStyle);
+    const matchesBudget = dest.averageCost <= budget;
+    const matchesInterest = dest.tags.some(tag => interests.includes(tag));
+    const matchesActivity = dest.activities.some(act => activities.includes(act));
+    return matchesStyle && matchesBudget && (matchesInterest || matchesActivity);
+});
+```
+
+### Recommendation Activation Plan
+To re-enable server-side filtering:
+1. Uncomment logic in `recom.controller.js`
+2. Update to query MongoDB instead of static data array
+3. Add route `POST /api/destinations/recommend` in `recom.routes.js`
+4. Connect to `Survey` data by user for personalized recommendations

@@ -1,0 +1,499 @@
+{
+  "info": {
+    "_postman_id": "happy-yatra-api-v1",
+    "name": "Happy Yatra API",
+    "description": "Complete API collection for Happy Yatra — Personalized Travel Destination Recommendation Platform.\n\nBase URL (Production): https://happyatra.vercel.app/api\nBase URL (Local): http://localhost:9000/api\n\n## Auth Setup\nAfter login/signup, copy `access_token` from the response and set it in the Collection Variable `access_token`. All protected routes will automatically use it via the `{{access_token}}` variable in the Authorization header.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:9000/api",
+      "type": "string",
+      "description": "Switch to https://happyatra.vercel.app/api for production"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string",
+      "description": "Set this after login/signup"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string",
+      "description": "Set this after login/signup"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints — signup, login, refresh, logout",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"securepassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "Register a new user. Returns tokens immediately (auto-login on signup).\n\nAccepts either `name` or `username` field — both are normalized to `username` in the DB."
+          },
+          "response": [
+            {
+              "name": "201 - Created",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"securepassword123\"\n}"
+                },
+                "url": "{{base_url}}/auth/signup"
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"message\": \"User registered successfully\",\n  \"access_token\": \"<jwt_access_token>\",\n  \"refresh_token\": \"<jwt_refresh_token>\",\n  \"user\": {\n    \"userId\": \"64abc123...\",\n    \"email\": \"john@example.com\"\n  }\n}"
+            },
+            {
+              "name": "400 - Bad Request",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"message\": \"Username or name is required\"\n}"
+            },
+            {
+              "name": "500 - User Exists",
+              "status": "Internal Server Error",
+              "code": 500,
+              "body": "{\n  \"message\": \"Registration failed\",\n  \"error\": \"User already exists\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.access_token) {",
+                  "  pm.collectionVariables.set('access_token', response.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', response.refresh_token);",
+                  "  console.log('Tokens saved to collection variables.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"securepassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email + password. The test script auto-saves `access_token` and `refresh_token` to collection variables."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"access_token\": \"<jwt_access_token>\",\n  \"refresh_token\": \"<jwt_refresh_token>\",\n  \"user\": {\n    \"userId\": \"64abc123...\",\n    \"email\": \"john@example.com\"\n  }\n}"
+            },
+            {
+              "name": "401 - Invalid Credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"message\": \"Login failed\",\n  \"error\": \"Invalid email or password\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.access_token) {",
+                  "  pm.collectionVariables.set('access_token', response.access_token);",
+                  "  console.log('New access_token saved.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Exchange a valid refresh token for a new access token. Refresh token is NOT rotated."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"access_token\": \"<new_jwt_access_token>\",\n  \"refresh_token\": \"<same_refresh_token>\"\n}"
+            },
+            {
+              "name": "401 - Invalid Refresh Token",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"message\": \"Refresh failed\",\n  \"error\": \"Invalid refresh token\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"{{access_token}}\",\n  \"refreshToken\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Invalidates both tokens by adding them to the blacklist. MongoDB TTL index auto-removes them after expiry."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Logout successful\"\n}"
+            },
+            {
+              "name": "500 - Error",
+              "status": "Internal Server Error",
+              "code": 500,
+              "body": "{\n  \"message\": \"Logout failed\",\n  \"error\": \"...\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Test Protected Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/data",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "data"]
+            },
+            "description": "Test endpoint to verify bearer token is valid and not blacklisted."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "\"protected page running\""
+            },
+            {
+              "name": "401 - Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"message\": \"Token expired\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "description": "User profile endpoints — requires Bearer token",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user/profile",
+              "host": ["{{base_url}}"],
+              "path": ["user", "profile"]
+            },
+            "description": "Fetch the authenticated user's full profile. Email is extracted from the JWT payload."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"user\": {\n    \"_id\": \"64abc123...\",\n    \"username\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"role\": \"user\"\n  }\n}"
+            },
+            {
+              "name": "404 - Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"message\": \"User not found\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Destinations",
+      "description": "Travel destination endpoints — public, no auth required",
+      "item": [
+        {
+          "name": "Get All Destinations (Paginated)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/destinations?page=1&limit=12",
+              "host": ["{{base_url}}"],
+              "path": ["destinations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "12",
+                  "description": "Results per page (default: 12)"
+                },
+                {
+                  "key": "trending",
+                  "value": "true",
+                  "description": "Filter trending destinations",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Fetch paginated destinations. Use `trending=true` to filter trending destinations. Note: No pagination metadata (total count) is returned in the response."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"_id\": \"64xyz789...\",\n    \"name\": \"Goa\",\n    \"imageUrl\": \"https://example.com/goa.jpg\",\n    \"averageCost\": 15000,\n    \"styles\": [\"beach\", \"relaxation\"],\n    \"tags\": [\"tropical\", \"coastal\"],\n    \"activities\": [\"surfing\", \"sightseeing\"],\n    \"location\": \"Goa, India\",\n    \"latitude\": 15.2993,\n    \"longitude\": 74.1240,\n    \"createdAt\": \"2024-01-01T00:00:00.000Z\",\n    \"updatedAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n]"
+            },
+            {
+              "name": "500 - Server Error",
+              "status": "Internal Server Error",
+              "code": 500,
+              "body": "{\n  \"message\": \"Server Error on get Destinations\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Destination by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/destinations/:id",
+              "host": ["{{base_url}}"],
+              "path": ["destinations", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "64xyz789abc123def456ghi",
+                  "description": "MongoDB ObjectId of the destination"
+                }
+              ]
+            },
+            "description": "Fetch a single destination by its MongoDB ObjectId. Returns 400 for malformed IDs and 404 if not found."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"_id\": \"64xyz789...\",\n  \"name\": \"Goa\",\n  \"imageUrl\": \"https://example.com/goa.jpg\",\n  \"averageCost\": 15000,\n  \"styles\": [\"beach\"],\n  \"tags\": [\"tropical\"],\n  \"activities\": [\"surfing\"],\n  \"location\": \"Goa, India\",\n  \"latitude\": 15.2993,\n  \"longitude\": 74.1240,\n  \"createdAt\": \"2024-01-01T00:00:00.000Z\",\n  \"updatedAt\": \"2024-01-01T00:00:00.000Z\"\n}"
+            },
+            {
+              "name": "400 - Invalid ID",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"message\": \"Invalid destination id format\"\n}"
+            },
+            {
+              "name": "404 - Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"message\": \"Destination not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Trending Destinations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/destinations?trending=true&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["destinations"],
+              "query": [
+                {
+                  "key": "trending",
+                  "value": "true"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Filter destinations with trending=true flag. Note: `trending` field must exist in the destination document for this to work."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Survey",
+      "description": "Travel preference survey endpoints — currently unauthenticated",
+      "item": [
+        {
+          "name": "Submit Survey",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": \"64abc123def456ghi789jkl\",\n  \"travelStyle\": \"adventure\",\n  \"budget\": 30000,\n  \"interests\": [\"nature\", \"culture\", \"history\"],\n  \"activities\": [\"hiking\", \"photography\", \"local food\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/survey",
+              "host": ["{{base_url}}"],
+              "path": ["survey"]
+            },
+            "description": "Submit travel preference data. The `user` field must be a valid MongoDB ObjectId. Note: This endpoint is currently unauthenticated — the user identity is taken on trust from the body."
+          },
+          "response": [
+            {
+              "name": "201 - Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"message\": \"Survey submitted successfully\"\n}"
+            },
+            {
+              "name": "400 - Invalid User ID",
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"message\": \"Invalid user ID\"\n}"
+            },
+            {
+              "name": "500 - Server Error",
+              "status": "Internal Server Error",
+              "code": 500,
+              "body": "{\n  \"error\": \"Failed to submit survey\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Surveys",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/survey",
+              "host": ["{{base_url}}"],
+              "path": ["survey"]
+            },
+            "description": "⚠️ WARNING: Fetches ALL survey records sorted newest first. This endpoint is unprotected and exposes all user survey data. Should be restricted to admin users."
+          },
+          "response": [
+            {
+              "name": "200 - OK",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"_id\": \"...\",\n    \"user\": \"64abc123...\",\n    \"travelStyle\": \"adventure\",\n    \"budget\": 30000,\n    \"interests\": [\"nature\"],\n    \"activities\": [\"hiking\"],\n    \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n]"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

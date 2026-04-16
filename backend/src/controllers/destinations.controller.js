@@ -12,8 +12,22 @@ const getDestinations = async (req, res) => {
             baseQuery.trending = true;
         }
 
-        const destinations = await Destination.find(baseQuery).skip(skip).limit(limit);
-        res.json(destinations);
+        const [destinations, total] = await Promise.all([
+            Destination.find(baseQuery).skip(skip).limit(limit),
+            Destination.countDocuments(baseQuery)
+        ]);
+
+        res.json({
+            data: destinations,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1
+            }
+        });
     } catch (error) {
         console.error('[getDestinations] Failed to fetch destinations', {
             query: req.query,

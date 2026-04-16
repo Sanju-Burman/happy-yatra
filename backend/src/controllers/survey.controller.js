@@ -3,6 +3,10 @@ const Survey = require('../models/surveyData.model')
 
 const submitSurvey = async (req, res) => {
     try {
+        if (req.user && (req.user.userId || req.user.id)) {
+            req.body.user = req.user.userId || req.user.id;
+        }
+        
         if (!mongoose.Types.ObjectId.isValid(req.body.user)) {
             return res.status(400).json({ message: "Invalid user ID" });
         }

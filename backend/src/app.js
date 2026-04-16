@@ -28,15 +28,24 @@ const corsOptions = {
     credentials: !allowAllOrigins
 };
 
-// Connect to Database
-connectDB().catch((error) => {
-    console.error('Database connection initialization failed:', error.message);
-});
+// Database Connection Middleware
+const ensureDBConnection = async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        res.status(503).json({
+            message: "Service Unavailable: Database connection failed",
+            error: error.message
+        });
+    }
+};
 
 // Middlewares
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
+app.use(ensureDBConnection);
 
 // Routes
 app.get("/", (req, res) => {

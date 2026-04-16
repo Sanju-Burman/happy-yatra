@@ -70,21 +70,31 @@ const refresh = async (refreshToken) => {
         throw new Error('Invalid token');
     }
 
-    return new Promise((resolve, reject) => {
-        jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY, (err, decoded) => {
-            if (err) {
-                return reject(new Error('Invalid refresh token'));
-            }
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY);
 
-            const accessToken = jwt.sign(
-                { userId: decoded.userId, email: decoded.email },
-                process.env.JWT_ACCESS_KEY,
-                { expiresIn: '1d' }
-            );
-
-            resolve({ accessToken });
+        await TokenBlacklist.create({
+            token: refreshToken,
+            type: 'refresh',
+            expiresAt: new Date(decoded.exp * 1000)
         });
-    });
+
+        const newAccessToken = jwt.sign(
+            { userId: decoded.userId, email: decoded.email },
+            process.env.JWT_ACCESS_KEY,
+            { expiresIn: '1d' }
+        );
+
+        const newRefreshToken = jwt.sign(
+            { userId: decoded.userId, email: decoded.email },
+            process.env.JWT_REFRESH_KEY,
+            { expiresIn: '7d' }
+        );
+
+        return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    } catch (err) {
+        throw new Error('Invalid refresh token');
+    }
 };
 
 const blacklistTokens = async (accessToken, refreshToken) => {

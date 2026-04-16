@@ -63,7 +63,7 @@ const refresh = async (req, res) => {
     const result = await authService.refresh(refresh_token);
     res.json({
       access_token: result.accessToken,
-      refresh_token: refresh_token // Keep the same or rotate if needed
+      refresh_token: result.refreshToken
     });
   } catch (error) {
     res.status(401).json({ message: 'Refresh failed', error: error.message });

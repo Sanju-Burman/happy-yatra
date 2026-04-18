@@ -234,17 +234,18 @@ Rules:
 
 ---
 
-## 8. Proposed Architecture Improvements
+## 8. Implemented Architecture Improvements
 
-| Area | Current State | Recommended Improvement |
-|------|--------------|------------------------|
-| **Input Validation** | Manual checks only | Add `joi` or `express-validator` |
-| **Token Rotation** | Refresh token NOT rotated | Implement token rotation on refresh |
-| **Survey Auth** | Unauthenticated | Add `verifyToken` middleware |
-| **Survey Listing** | No auth on `GET /survey` | Add `adminChecks` middleware |
-| **Recommendation Engine** | Commented out | Rebuild filter logic using destination schema |
-| **Pagination Metadata** | No total counts returned | Return `{data, total, page, totalPages}` |
-| **Trending Field** | Queried but missing from schema | Add `trending: {type: Boolean, default: false}` |
-| **Error Handling** | Basic try/catch | Centralized error class with custom statusCode |
-| **Rate Limiting** | None | Add `express-rate-limit` |
-| **Logging** | Console.log only | Add structured logger (winston/pino) |
+| Area | Status | Implementation Details |
+|------|-----------|------------------------|
+| **Input Validation** | ✅ Implemented | Using `express-validator` across all routes. |
+| **Token Rotation** | ✅ Implemented | Refresh tokens are rotated on each use; old tokens are blacklisted. |
+| **Survey Auth** | ✅ Implemented | Both GET and POST `/api/survey` routes now require valid JWTs. |
+| **Rate Limiting** | ✅ Implemented | Added `express-rate-limit` to all `/api/auth` routes. |
+| **Security Headers**| ✅ Implemented | Integrated `helmet` middleware for HTTP header hardening. |
+| **Data Privacy** | ✅ Implemented | User password hashes are explicitly excluded from profile responses. |
+| **DB Performance** | ✅ Implemented | Added database index to `user` field in the Survey collection. |
+| **Trending Field** | ✅ Fixed | Included `trending` in destination schema and query logic. |
+| **Recommendation Engine**| ⚠️ In Progress | Logic placeholder in `destinations.controller` awaits further refinement. |
+| **Pagination Metadata**| ✅ Implemented | All destination lists return full pagination objects. |
+| **Logging** | ⚠️ Pending | Future update: integrate structured logger (winston/pino). |

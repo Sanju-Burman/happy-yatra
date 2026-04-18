@@ -144,7 +144,7 @@ Issue a new access token using a valid refresh token.
 }
 ```
 
-> **Note:** Refresh token is NOT rotated — the same refresh token is returned.
+> **Note:** Refresh token is rotated — a new refresh token is returned and the old one is blacklisted.
 
 **Error Responses:**
 | Status | Condition | Body |
@@ -348,7 +348,7 @@ GET /api/destinations/64xyz789abc123def456ghi
 
 Submit user travel preference survey data.
 
-**Auth Required:** ❌ Public *(Note: should ideally be protected)*
+**Auth Required:** ✅ Bearer Token
 
 **Request Body:**
 ```json
@@ -388,7 +388,7 @@ Submit user travel preference survey data.
 
 Fetch all survey submissions, sorted by newest first.
 
-**Auth Required:** ❌ Public *(Note: exposes all user survey data — should be admin-protected)*
+**Auth Required:** ✅ Bearer Token
 
 **Success Response — `200 OK`:**
 ```json

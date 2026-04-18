@@ -310,7 +310,7 @@ paths:
       summary: Refresh access token
       description: |
         Exchange a valid refresh token for a new access token.
-        **Note**: The refresh token is NOT rotated — the same refresh token is returned.
+        **Note**: The refresh token is rotated — a new refresh token is returned and the old one is blacklisted.
       operationId: refreshToken
       requestBody:
         required: true
@@ -335,7 +335,7 @@ paths:
                     type: string
                   refresh_token:
                     type: string
-                    description: Same refresh token (not rotated)
+                    description: New refresh token (rotated)
         "401":
           description: Invalid or blacklisted refresh token
           content:
@@ -414,7 +414,6 @@ paths:
         Returns the full profile of the currently authenticated user.
         Email is extracted from the JWT payload, not from query params.
 
-        **Warning**: Response includes the full user document; password hash is stored but bcrypt-hashed.
       operationId: getProfile
       security:
         - BearerAuth: []
@@ -466,8 +465,6 @@ paths:
       description: |
         Fetch a paginated list of travel destinations.
         Use `trending=true` to filter trending destinations.
-
-        **Warning**: No pagination metadata (total count, totalPages) is returned in the response.
       operationId: getDestinations
       parameters:
         - name: page
@@ -500,9 +497,33 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Destination"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Destination"
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 45
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 12
+                      totalPages:
+                        type: integer
+                        example: 4
+                      hasNextPage:
+                        type: boolean
+                        example: true
+                      hasPrevPage:
+                        type: boolean
+                        example: false
         "500":
           description: Server error
           content:
@@ -563,12 +584,11 @@ paths:
       tags: [Survey]
       summary: Submit travel preference survey
       description: |
-        Submit travel preferences tied to a user ObjectId.
-
-        **Warning**: This endpoint is currently unauthenticated. The `user` ObjectId
-        is trusted from the request body without server-side verification of identity
-        or existence of the referenced user.
+        Submit travel preferences tied to an authenticated user.
+        The `user` ObjectId is automatically derived from the JWT payload for security.
       operationId: submitSurvey
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -634,10 +654,10 @@ paths:
       summary: Get all surveys
       description: |
         Retrieve all survey submissions sorted by newest first.
-
-        **Warning**: This endpoint is currently unauthenticated and exposes all user survey data.
-        It should be restricted to admin users only.
+        This endpoint is restricted to authenticated users.
       operationId: getSurveys
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: Array of survey submissions

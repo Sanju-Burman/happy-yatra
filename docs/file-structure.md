@@ -118,7 +118,7 @@ happy-yatra/                          # Monorepo root
 |------|-------------|-----------|---------|
 | `auth.routes.js` | `/api/auth` | `verifyToken` on `/data` only | login, signup, logout, refresh |
 | `user.routes.js` | `/api/user` | `verifyToken` on `/profile` | profileDetails |
-| `survey.routes.js` | `/api/survey` | None | submitSurvey, getSurvey |
+| `survey.routes.js` | `/api/survey` | `verifyToken` | submitSurvey, getSurvey |
 | `recom.routes.js` | `/api/destinations` | None | getDestinations, getDestinationById |
 
 ### `vercel.json`

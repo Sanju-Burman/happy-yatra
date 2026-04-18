@@ -1,72 +1,66 @@
+const ErrorResponse = require('../utils/ErrorResponse');
 const authService = require('../services/auth.service');
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const { payload, accessToken, refreshToken } = await authService.login(email, password);
 
-    // Align with frontend expectations (snake_case and 'user' instead of 'payload')
     res.status(200).json({
+      success: true,
       access_token: accessToken,
       refresh_token: refreshToken,
       user: payload
     });
   } catch (error) {
-    res.status(401).json({
-      message: "Login failed",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-const signup = async (req, res) => {
+const signup = async (req, res, next) => {
   try {
     const { username, name, email, password } = req.body;
-
-    // Frontend sends 'name', Backend model expects 'username'
     const userToCreate = username || name;
 
     if (!userToCreate) {
-      return res.status(400).json({ message: "Username or name is required" });
+      return next(new ErrorResponse("Username or name is required", 400));
     }
 
     const { newUser, payload, accessToken, refreshToken } = await authService.signup(userToCreate, email, password);
 
-    // Automatically log in after signup and return what frontend expects
     res.status(201).json({
+      success: true,
       message: "User registered successfully",
       access_token: accessToken,
       refresh_token: refreshToken,
       user: payload
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Registration failed",
-      error: error.message
-    });
+    next(error);
   }
 };
 
-const logout = async (req, res) => {
+const logout = async (req, res, next) => {
   try {
     const { accessToken, refreshToken } = req.body;
     await authService.blacklistTokens(accessToken, refreshToken);
-    res.json({ message: 'Logout successful' });
+    res.json({ success: true, message: 'Logout successful' });
   } catch (error) {
-    res.status(500).json({ message: 'Logout failed', error: error.message });
+    next(error);
   }
 };
 
-const refresh = async (req, res) => {
+const refresh = async (req, res, next) => {
   try {
     const { refresh_token } = req.body;
     const result = await authService.refresh(refresh_token);
     res.json({
+      success: true,
       access_token: result.accessToken,
       refresh_token: result.refreshToken
     });
   } catch (error) {
-    res.status(401).json({ message: 'Refresh failed', error: error.message });
+    next(new ErrorResponse(error.message, 401));
   }
 };
 

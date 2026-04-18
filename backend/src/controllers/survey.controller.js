@@ -1,32 +1,36 @@
 const mongoose = require('mongoose');
-const Survey = require('../models/surveyData.model')
+const Survey = require('../models/surveyData.model');
+const ErrorResponse = require('../utils/ErrorResponse');
 
-const submitSurvey = async (req, res) => {
+const submitSurvey = async (req, res, next) => {
     try {
         if (req.user && (req.user.userId || req.user.id)) {
             req.body.user = req.user.userId || req.user.id;
         }
         
         if (!mongoose.Types.ObjectId.isValid(req.body.user)) {
-            return res.status(400).json({ message: "Invalid user ID" });
+            return next(new ErrorResponse("Invalid user ID", 400));
         }
         const survey = new Survey(req.body);
         await survey.save();
-        res.status(201).json({ message: "Survey submitted successfully" });
+        res.status(201).json({ success: true, message: "Survey submitted successfully" });
     } catch (error) {
-        console.error("Survey submission failed:", error);
-        res.status(500).json({ error: "Failed to submit survey" });
+        next(error);
     }
 };
 
-const getSurvey= async (req, res) => {
+const getSurvey = async (req, res, next) => {
     try {
-        const surveys = await Survey.find().sort({ createdAt: -1 });
-        res.json(surveys);
+        const userId = req.user.userId || req.user.id;
+        // User only sees their own surveys, Admin sees all
+        const query = req.user.role === 'admin' ? {} : { user: userId };
+        
+        const surveys = await Survey.find(query).sort({ createdAt: -1 });
+        res.json({ success: true, count: surveys.length, data: surveys });
     } catch (error) {
-        res.status(500).json({ error: "Failed to fetch survey data" });
+        next(error);
     }
 };
 
 
-module.exports = { submitSurvey,getSurvey };
+module.exports = { submitSurvey, getSurvey };

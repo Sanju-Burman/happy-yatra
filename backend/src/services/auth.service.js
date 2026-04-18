@@ -70,39 +70,62 @@ const refresh = async (refreshToken) => {
         throw new Error('Invalid token');
     }
 
-    return new Promise((resolve, reject) => {
-        jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY, (err, decoded) => {
-            if (err) {
-                return reject(new Error('Invalid refresh token'));
-            }
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_KEY);
 
-            const accessToken = jwt.sign(
-                { userId: decoded.userId, email: decoded.email },
-                process.env.JWT_ACCESS_KEY,
-                { expiresIn: '1d' }
-            );
-
-            resolve({ accessToken });
+        await TokenBlacklist.create({
+            token: refreshToken,
+            type: 'refresh',
+            expiresAt: new Date(decoded.exp * 1000)
         });
-    });
+
+        const newAccessToken = jwt.sign(
+            { userId: decoded.userId, email: decoded.email },
+            process.env.JWT_ACCESS_KEY,
+            { expiresIn: '1d' }
+        );
+
+        const newRefreshToken = jwt.sign(
+            { userId: decoded.userId, email: decoded.email },
+            process.env.JWT_REFRESH_KEY,
+            { expiresIn: '7d' }
+        );
+
+        return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    } catch (err) {
+        throw new Error('Invalid refresh token');
+    }
 };
 
 const blacklistTokens = async (accessToken, refreshToken) => {
-    const accessTokenExp = jwt.decode(accessToken).exp;
-    const refreshTokenExp = jwt.decode(refreshToken).exp;
-
-    await TokenBlacklist.create([
-        {
-            token: accessToken,
-            type: 'access',
-            expiresAt: new Date(accessTokenExp * 1000)
-        },
-        {
-            token: refreshToken,
-            type: 'refresh',
-            expiresAt: new Date(refreshTokenExp * 1000)
+    try {
+        const decodedAccess = jwt.decode(accessToken);
+        const decodedRefresh = jwt.decode(refreshToken);
+        
+        const tokensToBlacklist = [];
+        
+        if (decodedAccess && decodedAccess.exp) {
+            tokensToBlacklist.push({
+                token: accessToken,
+                type: 'access',
+                expiresAt: new Date(decodedAccess.exp * 1000)
+            });
         }
-    ]);
+        
+        if (decodedRefresh && decodedRefresh.exp) {
+            tokensToBlacklist.push({
+                token: refreshToken,
+                type: 'refresh',
+                expiresAt: new Date(decodedRefresh.exp * 1000)
+            });
+        }
+        
+        if (tokensToBlacklist.length > 0) {
+            await TokenBlacklist.insertMany(tokensToBlacklist);
+        }
+    } catch (error) {
+        throw new Error('Failed to blacklist tokens: ' + error.message);
+    }
 };
 
 module.exports = {

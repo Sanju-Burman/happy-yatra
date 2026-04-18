@@ -1,5 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
+const errorHandler = require('./middlewares/error');
+
 const userRoutes = require('./routes/user.routes');
 const authRoutes = require('./routes/auth.routes');
 const surveyRoutes = require('./routes/survey.routes');
@@ -42,32 +47,34 @@ const ensureDBConnection = async (req, res, next) => {
 };
 
 // Middlewares
+app.use(helmet());
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
+
+// Sanitize data
+app.use(mongoSanitize());
+
 app.use(ensureDBConnection);
+
+// Rate Limiting for Auth
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 50, // limit each IP to 50 requests per windowMs
+    message: "Too many authentication attempts, please try again later"
+});
 
 // Routes
 app.get("/", (req, res) => {
     res.send("home");
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/survey', surveyRoutes);
 app.use('/api/destinations', recommendationRoutes);
 
-app.use((error, req, res, next) => {
-    const requestOrigin = req.headers.origin;
-    const responseOrigin = allowAllOrigins
-        ? '*'
-        : (requestOrigin && allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0] || '*');
-
-    res.setHeader('Access-Control-Allow-Origin', responseOrigin);
-    res.setHeader('Vary', 'Origin');
-    res.status(error.statusCode || 500).json({
-        message: error.message || 'Internal Server Error'
-    });
-});
+// Centralized Error Handler
+app.use(errorHandler);
 
 module.exports = app;

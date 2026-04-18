@@ -1,7 +1,8 @@
 const Destination = require('../models/destination.model');
 const mongoose = require('mongoose');
+const ErrorResponse = require('../utils/ErrorResponse');
 
-const getDestinations = async (req, res) => {
+const getDestinations = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 12;
@@ -12,34 +13,41 @@ const getDestinations = async (req, res) => {
             baseQuery.trending = true;
         }
 
-        const destinations = await Destination.find(baseQuery).skip(skip).limit(limit);
-        res.json(destinations);
-    } catch (error) {
-        console.error('[getDestinations] Failed to fetch destinations', {
-            query: req.query,
-            message: error.message
+        const [destinations, total] = await Promise.all([
+            Destination.find(baseQuery).skip(skip).limit(limit).lean(),
+            Destination.countDocuments(baseQuery)
+        ]);
+
+        res.json({
+            success: true,
+            data: destinations,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1
+            }
         });
-        res.status(500).json({ message: 'Server Error on get Destinations' });
+    } catch (error) {
+        next(error);
     }
 };
 
-const getDestinationById = async (req, res) => {
+const getDestinationById = async (req, res, next) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({ message: 'Invalid destination id format' });
+            return next(new ErrorResponse('Invalid destination id format', 400));
         }
 
-        const destination = await Destination.findById(req.params.id);
+        const destination = await Destination.findById(req.params.id).lean();
         if (!destination) {
-            return res.status(404).json({ message: 'Destination not found' });
+            return next(new ErrorResponse('Destination not found', 404));
         }
-        res.json(destination);
+        res.json({ success: true, data: destination });
     } catch (error) {
-        console.error('[getDestinationById] Failed to fetch destination', {
-            id: req.params.id,
-            message: error.message
-        });
-        res.status(500).json({ message: 'Server Error on get Destination by ID' });
+        next(error);
     }
 };
 

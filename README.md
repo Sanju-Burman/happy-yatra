@@ -112,11 +112,11 @@ Body: { "destinationId": "..." }
 ### Authentication
 - `POST /api/auth/signup` — Register new user
 - `POST /api/auth/login` — Login user, returns Access Token & Refresh Token
-- `POST /api/auth/refresh-token` — Get new Access Token
-- `POST /api/auth/logout` — Invalidate Refresh Token
+- `POST /api/auth/refresh` — Get new Access Token (Rotated)
+- `POST /api/auth/logout` — Invalidate Tokens (Blacklist)
 
 ### User Profile
-- `GET /api/profile` — Get user profile and saved destinations
+- `GET /api/user/profile` — Get user profile detail
 - `POST /api/profile/save` — Save a destination
 - `POST /api/profile/unsave` — Unsave a destination
 
@@ -151,10 +151,10 @@ User                Frontend              Backend                  Database
 ---
 
 ## 📜 Token Handling Details
-- **Access Tokens** are short-lived (~15 minutes) and used for regular authenticated requests.
-- **Refresh Tokens** are securely issued and stored, allowing silent renewal of Access Tokens without forcing users to log in repeatedly.
-- Backend verifies refresh tokens and issues new access tokens, implementing secure **Refresh Token Rotation** for additional security.
-- Logout flow clears the refresh token, invalidating user sessions properly.
+- **Access Tokens** are valid for **1 day** and used for regular authenticated requests.
+- **Refresh Tokens** are valid for **7 days**, allowing renewal of Access Tokens without forcing users to log in repeatedly.
+- Backend implements **Refresh Token Rotation**; old refresh tokens are blacklisted upon renewal.
+- Logout flow blacklists both tokens, invalidating user sessions properly.
 
 ---
 

@@ -107,7 +107,7 @@ POST /api/auth/refresh
                 │
   res.status(200).json({
     access_token: new token,
-    refresh_token: SAME refresh_token (not rotated)
+    refresh_token: new refresh_token (rotated)
   })
 ```
 
@@ -126,10 +126,10 @@ POST /api/auth/logout
          │
          └─► auth.service.js :: blacklistTokens(access, refresh)
                 │
-                ├─ jwt.decode(accessToken) → {exp: timestamp}
-                ├─ jwt.decode(refreshToken) → {exp: timestamp}
+                ├─ jwt.decode(accessToken) → {exp: timestamp} (Safe check)
+                ├─ jwt.decode(refreshToken) → {exp: timestamp} (Safe check)
                 │
-                ├─► TokenBlacklist.create([
+                ├─► TokenBlacklist.insertMany([
                 │       {token: accessToken, type: 'access', expiresAt: new Date(exp*1000)},
                 │       {token: refreshToken, type: 'refresh', expiresAt: new Date(exp*1000)}
                 │   ])  ──────────────────────────────────────► MongoDB (INSERT x2)
@@ -198,8 +198,8 @@ GET /api/destinations
   ├─► Destination.find({trending:true}).skip(12).limit(12) ─► MongoDB
   │       ◄ Destination[] ◄───────────────────────────────────
   │
-  res.status(200).json(destinations)
-  ⚠️ No total count or pagination metadata returned
+  res.status(200).json({ data: destinations, pagination: { ... } })
+  ✅ Full pagination metadata (total count, totalPages, etc.) returned
 ```
 
 ### 2.2 Single Destination Fetch
@@ -227,7 +227,8 @@ GET /api/destinations/:id
 Client                         Server                          MongoDB
 ──────                         ──────                          ───────
 POST /api/survey
-  {user: ObjectId, travelStyle, budget, interests[], activities[]}
+  Authorization: Bearer <token>
+  {travelStyle, budget, interests[], activities[]}
          │
          ▼
   survey.controller.js :: submitSurvey()
@@ -240,8 +241,8 @@ POST /api/survey
   │
   res.status(201).json({message: "Survey submitted successfully"})
 
-⚠️ No authentication required. User ObjectId comes from client — not verified server-side.
-⚠️ No validation that the referenced user actually exists.
+✅ Authentication required. User ObjectId is derived from the JWT payload server-side.
+✅ Validation ensured via verifyToken and existence of token-attached user.
 ```
 
 ---
@@ -269,7 +270,7 @@ GET /api/user/profile
   │   null → 404 "User not found"
   │
   res.status(200).json({user})
-  ⚠️ Returns full user document including hashed password
+  ✅ User document is filtered to explicitly exclude sensitive password fields.
 ```
 
 ---

@@ -1,28 +1,20 @@
 const User = require('../models/user.model');
+const ErrorResponse = require('../utils/ErrorResponse');
 
-const profileDetails = async (req, res) => {
-    console.log("Request Params:", req.params);
-    console.log("Request URL:", req.url);
-    const email = req.user?.email || req.params.email;
+const profileDetails = async (req, res, next) => {
+    const email = req.user?.email;
 
     if (!email) {
-        return res.status(400).json({
-            message: "Email parameter is required"
-        });
+        return next(new ErrorResponse("Email parameter is required", 400));
     }
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).select('-password');
         if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
+            return next(new ErrorResponse("User not found", 404));
         }
-        res.status(200).json({ user });
+        res.status(200).json({ success: true, user });
     } catch (e) {
-        console.error({ msg: "error", error: e });
-        res.status(500).json({
-            message: "Failed to fetch user details"
-        });
+        next(e);
     }
 }
 

@@ -72,6 +72,7 @@ Register a new user. On success, immediately issues tokens (auto-login).
 **Success Response — `201 Created`:**
 ```json
 {
+  "success": true,
   "message": "User registered successfully",
   "access_token": "<jwt_access_token>",
   "refresh_token": "<jwt_refresh_token>",
@@ -107,6 +108,7 @@ Authenticate an existing user.
 **Success Response — `200 OK`:**
 ```json
 {
+  "success": true,
   "access_token": "<jwt_access_token>",
   "refresh_token": "<jwt_refresh_token>",
   "user": {
@@ -139,12 +141,13 @@ Issue a new access token using a valid refresh token.
 **Success Response — `200 OK`:**
 ```json
 {
+  "success": true,
   "access_token": "<new_jwt_access_token>",
-  "refresh_token": "<same_jwt_refresh_token>"
+  "refresh_token": "<new_jwt_refresh_token>"
 }
 ```
 
-> **Note:** Refresh token is NOT rotated — the same refresh token is returned.
+> **Note:** Refresh token is rotated — a new refresh token is returned and the old one is blacklisted.
 
 **Error Responses:**
 | Status | Condition | Body |
@@ -172,6 +175,7 @@ Invalidate both access and refresh tokens by adding them to the blacklist.
 **Success Response — `200 OK`:**
 ```json
 {
+  "success": true,
   "message": "Logout successful"
 }
 ```
@@ -227,6 +231,7 @@ Authorization: Bearer <access_token>
 **Success Response — `200 OK`:**
 ```json
 {
+  "success": true,
   "user": {
     "_id": "64abc123...",
     "username": "John Doe",
@@ -270,22 +275,21 @@ GET /api/destinations?page=1&limit=12&trending=true
 
 **Success Response — `200 OK`:**
 ```json
-[
-  {
-    "_id": "64xyz789...",
-    "name": "Goa",
-    "imageUrl": "https://...",
-    "averageCost": 15000,
-    "styles": ["beach", "relaxation"],
-    "tags": ["tropical", "party"],
-    "activities": ["surfing", "sightseeing"],
-    "location": "Goa, India",
-    "latitude": 15.2993,
-    "longitude": 74.1240,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "64xyz789...",
+      "name": "Goa",
+      ...
+    }
+  ],
+  "pagination": {
+     "total": 45,
+     "page": 1,
+     ...
   }
-]
+}
 ```
 
 > ⚠️ No pagination metadata (total count, totalPages) is returned currently.
@@ -316,18 +320,12 @@ GET /api/destinations/64xyz789abc123def456ghi
 **Success Response — `200 OK`:**
 ```json
 {
-  "_id": "64xyz789...",
-  "name": "Goa",
-  "imageUrl": "https://...",
-  "averageCost": 15000,
-  "styles": ["beach"],
-  "tags": ["tropical"],
-  "activities": ["surfing"],
-  "location": "Goa, India",
-  "latitude": 15.2993,
-  "longitude": 74.1240,
-  "createdAt": "2024-01-01T00:00:00.000Z",
-  "updatedAt": "2024-01-01T00:00:00.000Z"
+  "success": true,
+  "data": {
+    "_id": "64xyz789...",
+    "name": "Goa",
+    ...
+  }
 }
 ```
 
@@ -348,7 +346,7 @@ GET /api/destinations/64xyz789abc123def456ghi
 
 Submit user travel preference survey data.
 
-**Auth Required:** ❌ Public *(Note: should ideally be protected)*
+**Auth Required:** ✅ Bearer Token
 
 **Request Body:**
 ```json
@@ -372,6 +370,7 @@ Submit user travel preference survey data.
 **Success Response — `201 Created`:**
 ```json
 {
+  "success": true,
   "message": "Survey submitted successfully"
 }
 ```
@@ -388,21 +387,22 @@ Submit user travel preference survey data.
 
 Fetch all survey submissions, sorted by newest first.
 
-**Auth Required:** ❌ Public *(Note: exposes all user survey data — should be admin-protected)*
+**Auth Required:** ✅ Bearer Token
 
 **Success Response — `200 OK`:**
 ```json
-[
-  {
-    "_id": "...",
-    "user": "64abc123...",
-    "travelStyle": "adventure",
-    "budget": 30000,
-    "interests": ["nature"],
-    "activities": ["hiking"],
-    "createdAt": "2024-01-01T00:00:00.000Z"
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "data": [
+    {
+      "_id": "...",
+      "user": "64abc123...",
+      "travelStyle": "adventure",
+      ...
+    }
+  ]
+}
 ```
 
 **Error Responses:**

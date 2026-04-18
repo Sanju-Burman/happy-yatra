@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const SurveySchema = new mongoose.Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref:"Users"},
+    user: { type: mongoose.Schema.Types.ObjectId, ref:"Users", index: true },
     travelStyle: { type: String, required: true },
     budget: { type: Number, required: true },
     interests: { type: [String], default: [] },

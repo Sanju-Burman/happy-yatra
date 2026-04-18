@@ -1,5 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 const userRoutes = require('./routes/user.routes');
 const authRoutes = require('./routes/auth.routes');
 const surveyRoutes = require('./routes/survey.routes');
@@ -42,17 +45,25 @@ const ensureDBConnection = async (req, res, next) => {
 };
 
 // Middlewares
+app.use(helmet());
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(ensureDBConnection);
+
+// Rate Limiting for Auth
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 50, // limit each IP to 50 requests per windowMs
+    message: "Too many authentication attempts, please try again later"
+});
 
 // Routes
 app.get("/", (req, res) => {
     res.send("home");
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/survey', surveyRoutes);
 app.use('/api/destinations', recommendationRoutes);

@@ -98,21 +98,34 @@ const refresh = async (refreshToken) => {
 };
 
 const blacklistTokens = async (accessToken, refreshToken) => {
-    const accessTokenExp = jwt.decode(accessToken).exp;
-    const refreshTokenExp = jwt.decode(refreshToken).exp;
-
-    await TokenBlacklist.create([
-        {
-            token: accessToken,
-            type: 'access',
-            expiresAt: new Date(accessTokenExp * 1000)
-        },
-        {
-            token: refreshToken,
-            type: 'refresh',
-            expiresAt: new Date(refreshTokenExp * 1000)
+    try {
+        const decodedAccess = jwt.decode(accessToken);
+        const decodedRefresh = jwt.decode(refreshToken);
+        
+        const tokensToBlacklist = [];
+        
+        if (decodedAccess && decodedAccess.exp) {
+            tokensToBlacklist.push({
+                token: accessToken,
+                type: 'access',
+                expiresAt: new Date(decodedAccess.exp * 1000)
+            });
         }
-    ]);
+        
+        if (decodedRefresh && decodedRefresh.exp) {
+            tokensToBlacklist.push({
+                token: refreshToken,
+                type: 'refresh',
+                expiresAt: new Date(decodedRefresh.exp * 1000)
+            });
+        }
+        
+        if (tokensToBlacklist.length > 0) {
+            await TokenBlacklist.insertMany(tokensToBlacklist);
+        }
+    } catch (error) {
+        throw new Error('Failed to blacklist tokens: ' + error.message);
+    }
 };
 
 module.exports = {

@@ -96,8 +96,8 @@ backend/
 ### Survey — `/api/survey`
 | Method | Path | Auth | Body | Response |
 |--------|------|------|------|----------|
-| POST | `/` | ❌ | `{user:ObjectId, travelStyle, budget, interests[], activities[]}` | `{message}` |
-| GET | `/` | ❌ | — | `Survey[]` sorted by createdAt DESC |
+| POST | `/` | ✅ Bearer | `{travelStyle, budget, interests[], activities[]}` | `{message}` |
+| GET | `/` | ✅ Bearer | — | `Survey[]` sorted by createdAt DESC |
 
 ### Destinations — `/api/destinations`
 | Method | Path | Auth | Query Params | Response |
@@ -188,12 +188,11 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 ## 7. Important Constraints & Rules
 
 1. **Token Storage**: Tokens are NOT stored server-side except in the blacklist on logout.
-2. **Refresh token is NOT rotated** on refresh — same refresh token is returned.
-3. **`recom.controller.js` is fully commented out** — dead code. Route `/api/destinations` uses `destinations.controller.js` instead.
-4. **Survey is unauthenticated** — `POST /api/survey` does NOT require JWT. User ObjectId is expected in the body.
-5. **Access token expiry: 1 day**, Refresh token expiry: **7 days**.
-6. **Admin role exists** in User model and `adminChecks` middleware exists, but NO admin-protected routes are currently wired.
-7. **`trending` field** is referenced in `destinations.controller.js` but **NOT defined in destination.model.js** — this is a schema gap.
+2. **Refresh token is rotated** on refresh — new tokens are returned and old are blacklisted.
+3. **Survey is authenticated** — `POST /api/survey` and `GET /api/survey` BOTH require JWT. User ObjectId is derived from token.
+4. **Access token expiry: 1 day**, Refresh token expiry: **7 days**.
+5. **Admin role exists** in User model and `adminChecks` middleware exists, but NO admin-protected routes are currently wired.
+7. **`trending` field** is defined and fully queried correctly in MongoDB.
 8. **CORS**: When `CORS_ORIGIN=*`, `credentials` is set to `false`. When restricted, credentials are allowed.
 9. **Vercel** routes all traffic to `src/app.js` (not `server.js`).
 10. **Signup accepts both `name` and `username`** fields (frontend sends `name`, model uses `username`).
@@ -219,10 +218,5 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 
 | Issue | Location | Severity |
 |-------|----------|----------|
-| `trending` field queried but not in schema | `destinations.controller.js` + `destination.model.js` | Medium |
-| `recom.controller.js` is dead code | `controllers/recom.controller.js` | Low |
-| Survey endpoint has no auth guard | `survey.routes.js` | Medium |
-| Refresh token not rotated on refresh | `auth.service.js:refresh()` | Medium |
-| No pagination metadata returned | `destinations.controller.js` | Low |
-| `getSurvey` is unauthenticated | `survey.routes.js` | High |
-| No input validation library | All controllers | Medium |
+| Missing pagination metadata | `destinations.controller.js` | Low |
+| No advanced input validation library (like Joi/Zod) | All controllers | Medium |

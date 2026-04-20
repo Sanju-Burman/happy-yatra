@@ -14,7 +14,7 @@ const login = async (email, password) => {
         throw new Error("Invalid email or password");
     }
 
-    const payload = { userId: user._id, email: user.email };
+    const payload = { sub: user._id.toString(), role: user.role };
     const accessToken = jwt.sign(
         payload,
         process.env.JWT_ACCESS_KEY,
@@ -26,7 +26,7 @@ const login = async (email, password) => {
         { expiresIn: '7d' }
     );
 
-    return { payload, accessToken, refreshToken };
+    return { payload, accessToken, refreshToken, role: user.role };
 };
 
 const signup = async (username, email, password) => {
@@ -45,19 +45,7 @@ const signup = async (username, email, password) => {
     });
     await newUser.save();
 
-    const payload = { userId: newUser._id, email: newUser.email };
-    const accessToken = jwt.sign(
-        payload,
-        process.env.JWT_ACCESS_KEY,
-        { expiresIn: '1d' }
-    );
-    const refreshToken = jwt.sign(
-        payload,
-        process.env.JWT_REFRESH_KEY,
-        { expiresIn: '7d' }
-    );
-
-    return { newUser, payload, accessToken, refreshToken };
+    return login(email, password);
 };
 
 const refresh = async (refreshToken) => {
@@ -80,13 +68,13 @@ const refresh = async (refreshToken) => {
         });
 
         const newAccessToken = jwt.sign(
-            { userId: decoded.userId, email: decoded.email },
+            { sub: decoded.sub, role: decoded.role },
             process.env.JWT_ACCESS_KEY,
             { expiresIn: '1d' }
         );
 
         const newRefreshToken = jwt.sign(
-            { userId: decoded.userId, email: decoded.email },
+            { sub: decoded.sub, role: decoded.role },
             process.env.JWT_REFRESH_KEY,
             { expiresIn: '7d' }
         );

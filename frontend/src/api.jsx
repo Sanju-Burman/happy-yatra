@@ -98,7 +98,22 @@ if (accessToken) {
 }
 
 export const submitSurvey = async (preferences) => {
-  const response = await axios.post(`${API}/survey`, preferences);
+  // Map frontend state to backend validation schema requirements
+  const budgetMapping = {
+    'budget': 1,
+    'moderate': 2,
+    'expensive': 3,
+    'luxury': 4
+  };
+
+  const payload = {
+    travelStyle: preferences.travel_style,
+    budget: budgetMapping[preferences.budget] || 1, // backend expects isNumeric()
+    interests: preferences.interests,
+    activities: preferences.past_travels // maps to activities in backend
+  };
+
+  const response = await axios.post(`${API}/survey`, payload);
   return response.data;
 };
 

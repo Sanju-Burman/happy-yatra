@@ -2,13 +2,12 @@ const User = require('../models/user.model');
 const ErrorResponse = require('../utils/ErrorResponse');
 
 const profileDetails = async (req, res, next) => {
-    const email = req.user?.email;
-
-    if (!email) {
-        return next(new ErrorResponse("Email parameter is required", 400));
-    }
     try {
-        const user = await User.findOne({ email }).select('-password');
+        if (!req.user || !req.user.id) {
+            return next(new ErrorResponse("Authentication required", 401));
+        }
+
+        const user = await User.findById(req.user.id).select('-password');
         if (!user) {
             return next(new ErrorResponse("User not found", 404));
         }

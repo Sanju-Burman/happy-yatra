@@ -4,13 +4,13 @@ const authService = require('../services/auth.service');
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const { payload, accessToken, refreshToken } = await authService.login(email, password);
+    const {role, accessToken, refreshToken } = await authService.login(email, password);
 
     res.status(200).json({
       success: true,
       access_token: accessToken,
       refresh_token: refreshToken,
-      user: payload
+      user: { email: email , role: role }
     });
   } catch (error) {
     next(error);

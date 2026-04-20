@@ -18,7 +18,10 @@ const verifyToken = async (req, res, next) => {
                 }
                 return res.status(401).json({ message: 'Invalid token in verifying' });
             }
-            req.user = decoded;
+            req.user = {
+                id: decoded.sub,
+                role: decoded.role
+            };
             next();
         });
     } catch (error) {

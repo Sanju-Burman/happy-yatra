@@ -3,11 +3,10 @@ const ErrorResponse = require('../utils/ErrorResponse');
 
 const profileDetails = async (req, res, next) => {
     try {
-        if (!req.user || !req.user.id) {
-            return next(new ErrorResponse("Authentication required", 401));
-        }
+        const user = await User.findById(req.user.id)
+            .select('username email role')
+            .lean();
 
-        const user = await User.findById(req.user.id).select('-password');
         if (!user) {
             return next(new ErrorResponse("User not found", 404));
         }

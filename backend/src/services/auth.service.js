@@ -18,7 +18,7 @@ const login = async (email, password) => {
     const accessToken = jwt.sign(
         payload,
         process.env.JWT_ACCESS_KEY,
-        { expiresIn: '1d' }
+        { expiresIn: '3h' }
     );
     const refreshToken = jwt.sign(
         payload,
@@ -70,7 +70,7 @@ const refresh = async (refreshToken) => {
         const newAccessToken = jwt.sign(
             { sub: decoded.sub, role: decoded.role },
             process.env.JWT_ACCESS_KEY,
-            { expiresIn: '1d' }
+            { expiresIn: '3h' }
         );
 
         const newRefreshToken = jwt.sign(

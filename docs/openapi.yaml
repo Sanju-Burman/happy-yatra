@@ -12,7 +12,7 @@ info:
     Obtain tokens via `/api/auth/login` or `/api/auth/signup`.
 
     ## Token Lifecycle
-    - **Access Token**: expires in **1 day**
+    - **Access Token**: expires in **3 hours**
     - **Refresh Token**: expires in **7 days**
     - Tokens are invalidated server-side via the **Token Blacklist** on logout.
   version: "1.0.0"
@@ -66,13 +66,13 @@ components:
     TokenPayload:
       type: object
       properties:
-        userId:
-          type: string
-          example: "64abc123def456ghi789jkl"
         email:
           type: string
           format: email
           example: "john@example.com"
+        role:
+          type: string
+          example: "user"
 
     AuthResponse:
       type: object
@@ -82,7 +82,7 @@ components:
           example: true
         access_token:
           type: string
-          description: JWT access token (expires in 1 day)
+          description: JWT access token (expires in 3 hours)
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         refresh_token:
           type: string
@@ -168,8 +168,9 @@ components:
           type: string
         user:
           type: string
-          description: MongoDB ObjectId referencing the Users collection
+          description: MongoDB ObjectId referencing the Users collection (automatically assigned from JWT)
           example: "64abc123def456ghi789jkl"
+          readOnly: true
         travelStyle:
           type: string
           example: "adventure"
@@ -418,7 +419,7 @@ paths:
       summary: Get authenticated user profile
       description: |
         Returns the full profile of the currently authenticated user.
-        Email is extracted from the JWT payload, not from query params.
+        The user identity is extracted from the JWT `sub` claim.
 
       operationId: getProfile
       security:
@@ -591,7 +592,8 @@ paths:
       summary: Submit travel preference survey
       description: |
         Submit travel preferences tied to an authenticated user.
-        The `user` ObjectId is automatically derived from the JWT payload for security.
+        The user identity is automatically derived from the JWT `sub` claim for security.
+        Any `user` field provided in the request body will be ignored in favor of the token identity.
       operationId: submitSurvey
       security:
         - BearerAuth: []
@@ -601,18 +603,15 @@ paths:
           application/json:
             schema:
               type: object
-              required: [user, travelStyle, budget]
+              required: [travelStyle, budget]
               properties:
-                user:
-                  type: string
-                  description: Valid MongoDB ObjectId referencing a user
-                  example: "64abc123def456ghi789jkl"
                 travelStyle:
                   type: string
                   example: "adventure"
                 budget:
                   type: number
-                  example: 30000
+                  description: "1 (Budget), 2 (Moderate), 3 (Expensive), 4 (Luxury)"
+                  example: 1
                 interests:
                   type: array
                   items:
@@ -659,8 +658,8 @@ paths:
       tags: [Survey]
       summary: Get all surveys
       description: |
-        Retrieve all survey submissions sorted by newest first.
-        This endpoint is restricted to authenticated users.
+        Retrieve survey submissions. Regular users only see their own surveys.
+        Admins can see all submissions. Sorted by newest first.
       operationId: getSurveys
       security:
         - BearerAuth: []

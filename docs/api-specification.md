@@ -10,7 +10,7 @@
 
 The API uses **JWT Bearer Token** authentication.
 
-- **Access Token** — short-lived (1 day). Pass in `Authorization` header.
+- **Access Token** — short-lived (3 hours). Pass in `Authorization` header.
 - **Refresh Token** — long-lived (7 days). Used to obtain new access tokens.
 
 ```
@@ -77,8 +77,8 @@ Register a new user. On success, immediately issues tokens (auto-login).
   "access_token": "<jwt_access_token>",
   "refresh_token": "<jwt_refresh_token>",
   "user": {
-    "userId": "64abc123...",
-    "email": "john@example.com"
+    "email": "john@example.com",
+    "role": "user"
   }
 }
 ```
@@ -112,8 +112,8 @@ Authenticate an existing user.
   "access_token": "<jwt_access_token>",
   "refresh_token": "<jwt_refresh_token>",
   "user": {
-    "userId": "64abc123...",
-    "email": "john@example.com"
+    "email": "john@example.com",
+    "role": "user"
   }
 }
 ```
@@ -241,10 +241,12 @@ Authorization: Bearer <access_token>
 }
 ```
 
+> **Note:** The user is looked up using the ID extracted from the JWT `sub` claim. Sensitive fields like `password` are excluded at the database level.
+
 **Error Responses:**
 | Status | Condition | Body |
 |--------|-----------|------|
-| `400` | Email not resolvable | `{"message": "Email parameter is required"}` |
+| `401` | Authentication required | `{"message": "Authentication required"}` |
 | `401` | Invalid/expired token | *(see auth errors above)* |
 | `404` | User not in DB | `{"message": "User not found"}` |
 | `500` | DB error | `{"message": "Failed to fetch user details"}` |
@@ -351,19 +353,19 @@ Submit user travel preference survey data.
 **Request Body:**
 ```json
 {
-  "user": "64abc123...",
   "travelStyle": "adventure",
-  "budget": 30000,
+  "budget": 1,
   "interests": ["nature", "culture"],
   "activities": ["hiking", "photography"]
 }
 ```
 
+> **Note:** The `user` field is no longer accepted in the request body. Ownership is automatically assigned based on the authenticated session's JWT. `budget` expects a numeric value (1: Budget, 2: Moderate, 3: Expensive, 4: Luxury).
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `user` | MongoDB ObjectId | ✅ | Must be a valid ObjectId of the user |
-| `travelStyle` | String | ✅ | e.g., `"adventure"`, `"relaxation"` |
-| `budget` | Number | ✅ | Total budget in INR (or relevant currency) |
+| `travelStyle` | String | ✅ | e.g., `"Solo"`, `"Adventure"` |
+| `budget` | Number | ✅ | 1 (Budget), 2 (Moderate), 3 (Expensive), 4 (Luxury) |
 | `interests` | String[] | ❌ | Array of interest tags |
 | `activities` | String[] | ❌ | Array of preferred activities |
 
@@ -383,11 +385,11 @@ Submit user travel preference survey data.
 
 ---
 
-### GET `/api/survey`
-
-Fetch all survey submissions, sorted by newest first.
+Fetch user survey submissions, sorted by newest first.
 
 **Auth Required:** ✅ Bearer Token
+
+> **Note:** Regular users can only see their own surveys. Admins can see all surveys.
 
 **Success Response — `200 OK`:**
 ```json

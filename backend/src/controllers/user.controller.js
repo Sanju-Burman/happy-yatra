@@ -1,4 +1,5 @@
 const User = require('../models/user.model');
+const Survey = require('../models/surveyData.model');
 const ErrorResponse = require('../utils/ErrorResponse');
 
 const profileDetails = async (req, res, next) => {
@@ -10,7 +11,14 @@ const profileDetails = async (req, res, next) => {
         if (!user) {
             return next(new ErrorResponse("User not found", 404));
         }
-        res.status(200).json({ success: true, user });
+
+        const survey = await Survey.findOne({ user: req.user.id }).sort({ createdAt: -1 }).lean();
+
+        res.status(200).json({ 
+            success: true, 
+            user,
+            preferences: survey || null
+        });
     } catch (e) {
         next(e);
     }

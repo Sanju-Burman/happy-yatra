@@ -107,10 +107,10 @@ export const submitSurvey = async (preferences) => {
   };
 
   const payload = {
-    travelStyle: preferences.travel_style,
-    budget: budgetMapping[preferences.budget] || 1, // backend expects isNumeric()
+    travelStyle: preferences.travelStyle,
+    budget: budgetMapping[preferences.budget] || 1,
     interests: preferences.interests,
-    activities: preferences.past_travels // maps to activities in backend
+    activities: preferences.activities
   };
 
   const response = await axios.post(`${API}/survey`, payload);

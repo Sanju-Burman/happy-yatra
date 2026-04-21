@@ -12,8 +12,8 @@ const Survey = () => {
   const [formData, setFormData] = useState({
     interests: [],
     budget: '',
-    travel_style: '',
-    past_travels: [],
+    travelStyle: '',
+    activities: [],
   });
 
   const interestOptions = ['Beach', 'Adventure', 'Culture', 'Nature', 'Food', 'History', 'Luxury', 'Wildlife', 'Photography', 'Relaxation'];
@@ -32,12 +32,12 @@ const Survey = () => {
     }));
   };
 
-  const handlePastTravelToggle = (region) => {
+  const handleActivitiesToggle = (region) => {
     setFormData((prev) => ({
       ...prev,
-      past_travels: prev.past_travels.includes(region)
-        ? prev.past_travels.filter((r) => r !== region)
-        : [...prev.past_travels, region],
+      activities: prev.activities.includes(region)
+        ? prev.activities.filter((r) => r !== region)
+        : [...prev.activities, region],
     }));
   };
 
@@ -50,7 +50,7 @@ const Survey = () => {
       toast.error('Please select a budget level');
       return;
     }
-    if (step === 3 && !formData.travel_style) {
+    if (step === 3 && !formData.travelStyle) {
       toast.error('Please select a travel style');
       return;
     }
@@ -66,7 +66,7 @@ const Survey = () => {
   };
 
   const handleSubmit = async () => {
-    if (formData.past_travels.length === 0) {
+    if (formData.activities.length === 0) {
       toast.error('Please select at least one region you\'ve visited or want to skip');
       return;
     }
@@ -75,7 +75,7 @@ const Survey = () => {
     try {
       await submitSurvey(formData);
       toast.success('Survey submitted successfully!');
-      setFormData({ interests: [], budget: '', travel_style: '', past_travels: [] });
+      setFormData({ interests: [], budget: '', travelStyle: '', activities: [] });
       navigate('/thank-you');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to submit survey');
@@ -169,8 +169,8 @@ const Survey = () => {
                 <button
                   key={style}
                   data-testid={`travel-style-${style.toLowerCase()}`}
-                  onClick={() => setFormData({ ...formData, travel_style: style })}
-                  className={`w-full p-6 rounded-lg border-2 transition-all duration-300 text-left font-medium text-lg ${formData.travel_style === style
+                  onClick={() => setFormData({ ...formData, travelStyle: style })}
+                  className={`w-full p-6 rounded-lg border-2 transition-all duration-300 text-left font-medium text-lg ${formData.travelStyle === style
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border bg-card text-foreground hover:border-primary/50'
                     }`}
@@ -199,8 +199,8 @@ const Survey = () => {
                 <button
                   key={region}
                   data-testid={`past-travel-${region.toLowerCase().replace(' ', '-')}`}
-                  onClick={() => handlePastTravelToggle(region)}
-                  className={`p-4 rounded-lg border-2 transition-all duration-300 font-medium ${formData.past_travels.includes(region)
+                  onClick={() => handleActivitiesToggle(region)}
+                  className={`p-4 rounded-lg border-2 transition-all duration-300 font-medium ${formData.activities.includes(region)
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border bg-card text-foreground hover:border-primary/50'
                     }`}

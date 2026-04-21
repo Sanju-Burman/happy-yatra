@@ -13,7 +13,7 @@ const Landing = ({ user }) => {
     const fetchTrending = async () => {
       try {
         const data = await getDestinations(1, 6, true);
-        setTrendingDestinations(data.destinations || []);
+        setTrendingDestinations(data.data || []);
       } catch (error) {
         console.error('Error fetching trending destinations:', error);
       } finally {

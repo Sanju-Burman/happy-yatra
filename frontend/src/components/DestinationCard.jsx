@@ -15,14 +15,14 @@ const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
       if (showSaveButton) {
         try {
           const savedData = await getSavedDestinations();
-          setIsSaved(savedData.some(d => d.id === destination.id));
+          setIsSaved(Array.isArray(savedData.data) && savedData.data.some(d => (d._id || d.id) === destination._id));
         } catch (error) {
           console.error('Error checking saved status:', error);
         }
       }
     };
     checkSavedStatus();
-  }, [destination.id, showSaveButton]);
+  }, [destination._id, showSaveButton]);
 
   const handleSaveToggle = async (e) => {
     e.stopPropagation();
@@ -30,11 +30,11 @@ const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
 
     try {
       if (isSaved) {
-        await unsaveDestination(destination.id);
+        await unsaveDestination(destination._id);
         setIsSaved(false);
         toast.success('Removed from saved destinations');
       } else {
-        await saveDestination(destination.id);
+        await saveDestination(destination._id);
         setIsSaved(true);
         toast.success('Added to saved destinations');
       }
@@ -49,19 +49,19 @@ const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
   };
 
   const handleCardClick = () => {
-    navigate(`/destination/${destination.id}`);
+    navigate(`/destination/${destination._id}`);
   };
 
   return (
     <div
-      data-testid={`destination-card-${destination.id}`}
+      data-testid={`destination-card-${destination._id}`}
       onClick={handleCardClick}
       className="group relative overflow-hidden rounded-2xl bg-card shadow-sm hover:shadow-md transition-all duration-500 cursor-pointer border border-border"
     >
       {/* Image */}
       <div className="relative aspect-[4/5] overflow-hidden bg-muted">
         <img
-          src={destination.image_url}
+          src={destination.imageUrl}
           alt={destination.name}
           onLoad={() => setImageLoaded(true)}
           className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 lazy-image ${imageLoaded ? 'loaded' : ''}`}

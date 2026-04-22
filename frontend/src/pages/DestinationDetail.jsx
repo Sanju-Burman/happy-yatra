@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDestination, saveDestination, unsaveDestination, getSavedDestinations } from '@/api.jsx';
 import { toast } from 'sonner';
-import { MapPin, Heart, ArrowLeft, DollarSign, Tag } from 'lucide-react';
+import { MapPin, Heart, ArrowLeft, DollarSign, Tag, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import MapPlaceholder from '@/components/MapPlaceholder.jsx';
 
@@ -21,8 +21,8 @@ const DestinationDetail = () => {
           getDestination(id),
           getSavedDestinations()
         ]);
-        setDestination(destData);
-        setIsSaved(savedData.some(d => d.id === id));
+        setDestination(destData.data);
+        setIsSaved(Array.isArray(savedData.data) && savedData.data.some(d => (d._id || d.id) === id));
       } catch (error) {
         console.error('Error fetching destination:', error);
         toast.error('Failed to load destination details');
@@ -74,7 +74,7 @@ const DestinationDetail = () => {
       {/* Hero Image */}
       <div className="relative h-[60vh] overflow-hidden">
         <img
-          src={destination.image_url}
+          src={destination.imageUrl}
           alt={destination.name}
           className="w-full h-full object-cover"
         />
@@ -111,7 +111,7 @@ const DestinationDetail = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <MapPin className="w-5 h-5 text-white" strokeWidth={1.5} />
-              <span className="text-white font-mono text-sm uppercase tracking-wide">{destination.country}</span>
+              <span className="text-white font-mono text-sm uppercase tracking-wide">{destination.location}</span>
             </div>
             <h1 className="font-heading text-5xl md:text-6xl font-bold text-white mb-4 tracking-tight">
               {destination.name}
@@ -151,11 +151,10 @@ const DestinationDetail = () => {
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                    <span className="font-medium text-foreground">Budget Level</span>
+                    <span className="font-medium text-foreground">Average Cost</span>
                   </div>
                   <span className="inline-block bg-muted px-4 py-2 rounded-lg text-sm font-medium text-foreground capitalize">
-                    {destination.budget_level}
+                    ${destination.averageCost}
                   </span>
                 </div>
 
@@ -165,7 +164,7 @@ const DestinationDetail = () => {
                     <span className="font-medium text-foreground">Category</span>
                   </div>
                   <span className="inline-block bg-muted px-4 py-2 rounded-lg text-sm font-medium text-foreground">
-                    {destination.category}
+                    {destination.styles?.[0] || 'Travel'}
                   </span>
                 </div>
 
@@ -175,7 +174,7 @@ const DestinationDetail = () => {
                     <span className="font-medium text-foreground">Best For</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {destination.best_for.map((tag, idx) => (
+                    {(destination.tags || []).map((tag, idx) => (
                       <span
                         key={idx}
                         className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-foreground capitalize"

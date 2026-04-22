@@ -9,6 +9,13 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [savedDestinations, setSavedDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const budgetLabels = {
+    1: 'budget',
+    2: 'moderate',
+    3: 'expensive',
+    4: 'luxury'
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,7 +89,7 @@ const Profile = () => {
                       <Compass className="w-5 h-5 text-primary" strokeWidth={1.5} />
                       <span className="text-sm text-muted-foreground">Travel Style</span>
                     </div>
-                    <p className="text-lg font-semibold text-foreground capitalize">{profile.preferences.travel_style}</p>
+                    <p className="text-lg font-semibold text-foreground capitalize">{profile.preferences.travelStyle}</p>
                   </div>
                 )}
               </div>
@@ -109,14 +116,14 @@ const Profile = () => {
                 <div>
                   <h3 className="font-medium text-foreground mb-3">Budget</h3>
                   <span className="bg-muted px-4 py-2 rounded-full text-sm font-medium text-foreground capitalize">
-                    {profile.preferences.budget}
+                    {budgetLabels[profile.preferences.budget] || profile.preferences.budget}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="font-medium text-foreground mb-3">Regions Visited</h3>
                   <div className="flex flex-wrap gap-2">
-                    {profile?.preferences?.past_travels?.map((region, idx) => (
+                    {profile?.preferences?.activities?.map((region, idx) => (
                       <span key={idx} className="bg-muted px-4 py-2 rounded-full text-sm font-medium text-foreground flex items-center gap-1">
                         <MapPin className="w-3 h-3" strokeWidth={1.5} />
                         {region}

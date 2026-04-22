@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const apiBase = import.meta.env.VITE_Backend_API || import.meta.env.VITE_BACKEND_API || 'http://localhost:9000/api';
+const apiBase = import.meta.env.VITE_Backend_API || 'http://localhost:9000/api';
 const API = apiBase.replace(/\/+$/, '');
 
 export const setAuthToken = (token) => {
@@ -98,7 +98,22 @@ if (accessToken) {
 }
 
 export const submitSurvey = async (preferences) => {
-  const response = await axios.post(`${API}/survey`, preferences);
+  // Map frontend state to backend validation schema requirements
+  const budgetMapping = {
+    'budget': 1,
+    'moderate': 2,
+    'expensive': 3,
+    'luxury': 4
+  };
+
+  const payload = {
+    travelStyle: preferences.travelStyle,
+    budget: budgetMapping[preferences.budget] || 1,
+    interests: preferences.interests,
+    activities: preferences.activities
+  };
+
+  const response = await axios.post(`${API}/survey`, payload);
   return response.data;
 };
 

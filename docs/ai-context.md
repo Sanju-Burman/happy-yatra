@@ -11,7 +11,7 @@
 | **Type** | Full-stack (Node.js + React.js) |
 | **Runtime** | Node.js + Express.js |
 | **Database** | MongoDB Atlas (Mongoose ODM) |
-| **Auth** | JWT (Access Token 1d + Refresh Token 7d) + Token Blacklist |
+| **Auth** | JWT (Access Token 3h + Refresh Token 7d) + Token Blacklist |
 | **Deployment** | Backend → Vercel (`happyatra.vercel.app`), Frontend → Netlify (`happyyatra.netlify.app`) |
 | **Base API URL** | `https://happyatra.vercel.app/api` |
 
@@ -29,7 +29,7 @@ backend/
     ├── config/
     │   └── db.js                # mongoose.connect() using process.env.MONGO_DB
     ├── models/
-    │   ├── user.model.js        # Collection: 'Users' — username, email, password, role
+    │   ├── user.model.js        # Collection: 'Users' — username, email, password (select:false), role
     │   ├── destination.model.js # Collection: 'destinations' — name, imageUrl, averageCost, styles[], tags[], activities[], location, lat, lng
     │   ├── surveyData.model.js  # Collection: 'Survey' — user(ref), travelStyle, budget, interests[], activities[]
     │   └── tokenBlocking.model.js # Collection: 'TokenBlacklist' — token, type, expiresAt (TTL index)
@@ -56,7 +56,7 @@ backend/
 
 ### User (`Users` collection)
 ```js
-{ username: String, email: String(unique), password: String(bcrypt), role: 'user'|'admin' }
+{ username: String, email: String(unique), password: String(bcrypt, select:false), role: 'user'|'admin' }
 ```
 
 ### Destination (`destinations` collection)
@@ -82,7 +82,7 @@ backend/
 ### Auth — `/api/auth`
 | Method | Path | Auth | Body | Response |
 |--------|------|------|------|----------|
-| POST | `/login` | ❌ | `{email, password}` | `{access_token, refresh_token, user:{userId,email}}` |
+| POST | `/login` | ❌ | `{email, password}` | `{access_token, refresh_token, user:{email, role}}` |
 | POST | `/signup` | ❌ | `{name\|username, email, password}` | `{message, access_token, refresh_token, user}` |
 | POST | `/logout` | ❌ | `{accessToken, refreshToken}` | `{message}` |
 | POST | `/refresh` | ❌ | `{refresh_token}` | `{access_token, refresh_token}` |
@@ -97,7 +97,7 @@ backend/
 | Method | Path | Auth | Body | Response |
 |--------|------|------|------|----------|
 | POST | `/` | ✅ Bearer | `{travelStyle, budget, interests[], activities[]}` | `{message}` |
-| GET | `/` | ✅ Bearer | — | `Survey[]` sorted by createdAt DESC |
+| GET | `/` | ✅ Bearer | — | `Survey[]` filtered by user (unless admin) |
 
 ### Destinations — `/api/destinations`
 | Method | Path | Auth | Query Params | Response |
@@ -113,9 +113,9 @@ backend/
 ```
 Client → POST /api/auth/login {email, password}
   → authService.login()
-    → User.findOne({email}) → bcrypt.compare()
-    → jwt.sign(payload, JWT_ACCESS_KEY, 1d) + jwt.sign(payload, JWT_REFRESH_KEY, 7d)
-  ← {access_token, refresh_token, user:{userId, email}}
+    → User.findOne({email}).select('+password') → bcrypt.compare()
+    → jwt.sign({sub: user._id.toString(), role: user.role}, JWT_ACCESS_KEY, 3h) + jwt.sign(payload, JWT_REFRESH_KEY, 7d)
+  ← {access_token, refresh_token, user:{email, role}}
 ```
 
 ### Auth Flow (Signup)
@@ -134,8 +134,8 @@ Client → POST /api/auth/signup {name|username, email, password}
 Client → POST /api/auth/refresh {refresh_token}
   → TokenBlacklist.findOne(token) → reject if blacklisted
   → jwt.verify(token, JWT_REFRESH_KEY) → decode
-  → jwt.sign(new accessToken, JWT_ACCESS_KEY, 1d)
-  ← {access_token, refresh_token (same)}
+  → jwt.sign({sub: decoded.sub, role: decoded.role}, JWT_ACCESS_KEY, 3h)
+  ← {access_token, refresh_token (rotated)}
 ```
 
 ### Logout (Token Blacklisting)
@@ -155,8 +155,8 @@ Client → GET /api/user/profile
       1. Extract token from "Bearer <token>"
       2. TokenBlacklist.findOne(token) → 401 if blacklisted
       3. jwt.verify(token, JWT_ACCESS_KEY) → 401 if expired/invalid
-      4. req.user = decoded → next()
-  → profileController: User.findOne({email: req.user.email})
+      4. req.user = {id: decoded.sub, role: decoded.role} → next()
+  → profileController: User.findById(req.user.id).select('username email role').lean()
   ← {user}
 ```
 
@@ -189,8 +189,8 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 
 1. **Token Storage**: Tokens are NOT stored server-side except in the blacklist on logout.
 2. **Refresh token is rotated** on refresh — new tokens are returned and old are blacklisted.
-3. **Survey is authenticated** — `POST /api/survey` and `GET /api/survey` BOTH require JWT. User ObjectId is derived from token.
-4. **Access token expiry: 1 day**, Refresh token expiry: **7 days**.
+3. **Survey is authenticated** — `POST /api/survey` and `GET /api/survey` BOTH require JWT. User ObjectId is derived from token `sub`, NOT from request body.
+4. **Access token expiry: 3 hours**, Refresh token expiry: **7 days**.
 5. **Admin role exists** in User model and `adminChecks` middleware exists, but NO admin-protected routes are currently wired.
 7. **`trending` field** is defined and fully queried correctly in MongoDB.
 8. **CORS**: When `CORS_ORIGIN=*`, `credentials` is set to `false`. When restricted, credentials are allowed.

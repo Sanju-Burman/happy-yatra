@@ -15,7 +15,7 @@ const Recommendations = () => {
     const fetchRecommendations = async () => {
       try {
         const data = await getRecommendations();
-        setDestinations(data || []);
+        setDestinations(data.data || []);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         if (error.response?.status === 400) {

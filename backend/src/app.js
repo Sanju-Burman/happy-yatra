@@ -9,6 +9,9 @@ const userRoutes = require('./routes/user.routes');
 const authRoutes = require('./routes/auth.routes');
 const surveyRoutes = require('./routes/survey.routes');
 const recommendationRoutes = require('./routes/recom.routes');
+const personalizedRecomRoutes = require('./routes/recommendations.routes');
+const savedDestinationsRoutes = require('./routes/saved-destinations.routes');
+const configRoutes = require('./routes/config.routes');
 
 const connectDB = require('./config/db');
 
@@ -73,6 +76,9 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/survey', surveyRoutes);
 app.use('/api/destinations', recommendationRoutes);
+app.use('/api/recommendations', personalizedRecomRoutes);
+app.use('/api/saved-destinations', savedDestinationsRoutes);
+app.use('/api/config', configRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);

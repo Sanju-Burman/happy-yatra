@@ -32,8 +32,8 @@ POST /api/auth/signup
          ├─► User.save({username, email, hashedPassword})  ───► MongoDB (INSERT)
          │       ◄ newUser ◄────────────────────────────────────
          │
-         ├─ jwt.sign({userId, email}, JWT_ACCESS_KEY, '1d')
-         ├─ jwt.sign({userId, email}, JWT_REFRESH_KEY, '7d')
+         ├─ jwt.sign({sub: user._id.toString(), role: user.role}, JWT_ACCESS_KEY, '3h')
+         ├─ jwt.sign({sub: user._id.toString(), role: user.role}, JWT_REFRESH_KEY, '7d')
          │
          ◄─── {newUser, payload, accessToken, refreshToken}
          │
@@ -65,8 +65,8 @@ POST /api/auth/login
                 ├─ bcrypt.compare(password, user.password)
                 │   OR throw "Invalid email or password" → 401
                 │
-                ├─ Build payload: {userId, email}
-                ├─ jwt.sign(payload, JWT_ACCESS_KEY, '1d')
+                ├─ Build payload: {sub: user._id.toString(), role: user.role}
+                ├─ jwt.sign(payload, JWT_ACCESS_KEY, '3h')
                 ├─ jwt.sign(payload, JWT_REFRESH_KEY, '7d')
                 │
                 ◄── {payload, accessToken, refreshToken}
@@ -99,9 +99,9 @@ POST /api/auth/refresh
                 │
                 ├─ jwt.verify(token, JWT_REFRESH_KEY)
                 │   ├── err: throw "Invalid refresh token" → 401
-                │   └── decoded: {userId, email}
+                │   └── decoded: {sub, role}
                 │
-                ├─ jwt.sign({userId, email}, JWT_ACCESS_KEY, '1d')
+                ├─ jwt.sign({sub: decoded.sub, role: decoded.role}, JWT_ACCESS_KEY, '3h')
                 │
                 ◄── {accessToken}
                 │
@@ -168,7 +168,7 @@ ANY Protected Request
   ├─ jwt.verify(token, JWT_ACCESS_KEY, callback)
   │   ├── TokenExpiredError → 401 "Token expired"
   │   ├── Other error → 401 "Invalid token in verifying"
-  │   └── Success: req.user = decoded payload {userId, email}
+  │   └── Success: req.user = {id: decoded.sub, role: decoded.role}
   │
   └─► next()  →  Controller
 ```
@@ -233,11 +233,10 @@ POST /api/survey
          ▼
   survey.controller.js :: submitSurvey()
   │
-  ├─ mongoose.Types.ObjectId.isValid(req.body.user)
-  │   INVALID → 400 "Invalid user ID"
+  ├─ Extract userId from req.user.id
   │
-  ├─ new Survey(req.body) → survey.save() ──────────────────► MongoDB (INSERT)
-  │       ◄ saved doc ◄──────────────────────────────────────
+  ├─ new Survey({...req.body, user: userId}) → survey.save() ────────► MongoDB (UPSERT)
+  │       ◄ saved doc ◄──────────────────────────────────────────────
   │
   res.status(201).json({message: "Survey submitted successfully"})
 
@@ -256,21 +255,19 @@ GET /api/user/profile
   Authorization: Bearer <token>
          │
          ▼
-  [verifyToken middleware]
-  → req.user = {userId, email}
-         │
-         ▼
-  user.controller.js :: profileDetails()
-  │
-  ├─ email = req.user?.email || req.params.email
-  │   null → 400 "Email parameter is required"
-  │
-  ├─► User.findOne({email}) ────────────────────────────────► MongoDB
-  │       ◄ user | null ◄──────────────────────────────────────
-  │   null → 404 "User not found"
-  │
-  res.status(200).json({user})
-  ✅ User document is filtered to explicitly exclude sensitive password fields.
+   [verifyToken middleware]
+   → req.user = {id, role}
+          │
+          ▼
+   user.controller.js :: profileDetails()
+   │
+   ├─► User.findById(req.user.id).select('username email role').lean() ─► MongoDB
+   │       ◄ user | null ◄───────────────────────────────────────────────
+   │   null → 404 "User not found"
+   │
+   res.status(200).json({user})
+   ✅ User document is filtered via strict allow-list and password is hard-excluded in schema.
+   ✅ Optimization: .lean() used for read-only performance.
 ```
 
 ---

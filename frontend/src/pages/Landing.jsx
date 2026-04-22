@@ -6,22 +6,41 @@ import { getDestinations } from '@/api.jsx';
 import DestinationCard from '@/components/DestinationCard.jsx';
 
 const Landing = ({ user }) => {
-  const [trendingDestinations, setTrendingDestinations] = useState([]);
+  const [allDestinations, setAllDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewLimit, setViewLimit] = useState(10);
 
   useEffect(() => {
-    const fetchTrending = async () => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width < 768) setViewLimit(6);
+      else if (width < 1024) setViewLimit(8);
+      else setViewLimit(10);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const fetchDestinations = async () => {
       try {
-        const data = await getDestinations(1, 6, true);
-        setTrendingDestinations(data.data || []);
+        const response = await getDestinations(1, 20);
+        const data = Array.isArray(response.data) ? response.data : [];
+        // Sort by trending first
+        const sorted = [...data].sort((a, b) => (b.trending ? 1 : 0) - (a.trending ? 1 : 0));
+        setAllDestinations(sorted);
       } catch (error) {
-        console.error('Error fetching trending destinations:', error);
+        console.error('Error fetching destinations:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchTrending();
+    fetchDestinations();
   }, []);
+
+  const displayedItems = allDestinations.slice(0, viewLimit);
 
   return (
     <div data-testid="landing-page" className="relative">
@@ -32,9 +51,6 @@ const Landing = ({ user }) => {
             src="https://images.unsplash.com/photo-1732808460864-b8e5eb489a52?auto=format,compress&q=80&w=1200&fm=webp"
             alt="Hero Background"
             className="w-full h-full object-cover"
-            fetchpriority="high"
-            decoding="async"
-            loading="eager"
             width="1200"
             height="800"
           />
@@ -144,27 +160,29 @@ const Landing = ({ user }) => {
           </motion.div>
 
           {loading ? (
-            <div className="text-center py-12">Loading trending destinations...</div>
+            <div className="text-center py-12">Loading destinations...</div>
           ) : (
-            <div data-testid="trending-destinations-grid" className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {trendingDestinations?.length > 0 ? (
-                trendingDestinations.map((destination, idx) => (
-                  <motion.div
-                    key={destination.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: idx * 0.1 }}
-                    viewport={{ once: true }}
-                  >
-                    <DestinationCard destination={destination} showSaveButton={!!user} />
-                  </motion.div>
-                ))
+            <>
+              {displayedItems.length === 0 ? (
+                <div data-testid="empty-state" className="col-span-full text-center py-12 text-muted-foreground bg-muted/30 rounded-2xl border-2 border-dashed border-border">
+                  <p className="text-lg">No trending destinations available at the moment.</p>
+                </div>
               ) : (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  No trending destinations available at the moment.
+                <div data-testid="destinations-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {displayedItems.map((destination, idx) => (
+                    <motion.div
+                      key={destination._id || destination.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: (idx % 4) * 0.1 }}
+                      viewport={{ once: true }}
+                    >
+                      <DestinationCard destination={destination} showSaveButton={!!user} />
+                    </motion.div>
+                  ))}
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </section>

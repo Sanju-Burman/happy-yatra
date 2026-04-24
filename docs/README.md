@@ -45,8 +45,14 @@ GET    /api/user/profile         [AUTH] Get user profile
 GET    /api/destinations         Paginated destinations (?page&limit&trending=true)
 GET    /api/destinations/:id     Single destination
 
-POST   /api/survey               Submit travel preferences
-GET    /api/survey               Get all surveys (⚠️ unprotected)
+GET    /api/saved-destinations   [AUTH] Get user's saved destinations
+POST   /api/saved-destinations/:id  [AUTH] Save a destination
+DELETE /api/saved-destinations/:id  [AUTH] Unsave a destination
+
+POST   /api/survey               [AUTH] Submit travel preferences
+GET    /api/survey               [AUTH] Get user's survey submissions
+
+POST   /api/recommendations     [AUTH] Get personalized recommendations
 ```
 
 ### Environment Variables (`.env` in `backend/`)
@@ -62,16 +68,25 @@ CORS_ORIGIN=http://localhost:5173,https://happyyatra.netlify.app
 
 ## ⚠️ Known Issues (Priority Order)
 
-| # | Issue | Location | Fix |
-|---|-------|----------|-----|
-| 1 | `GET /api/survey` exposes all user data anonymously | `survey.routes.js` | Add `verifyToken + adminChecks` |
-| 2 | Survey submission has no auth guard | `survey.routes.js` | Add `verifyToken` |
-| 3 | `trending` field queried but not in schema | `destination.model.js` | Add `trending: { type: Boolean, default: false }` |
-| 4 | Refresh token not rotated on refresh | `auth.service.js` | Issue + blacklist old refresh token |
-| 5 | No pagination metadata in destinations | `destinations.controller.js` | Return `{data, total, page, totalPages}` |
-| 6 | `recom.controller.js` is dead code | `controllers/` | Remove or implement |
-| 7 | No input validation library | All controllers | Add `joi` or `express-validator` |
-| 8 | No rate limiting | `app.js` | Add `express-rate-limit` |
+| # | Issue | Location | Status |
+|---|-------|----------|--------|
+| 1 | Google Map integration incomplete | `MapPlaceholder.jsx` | ⚠️ In Progress |
+| 2 | `recom.controller.js` contains dead code | `controllers/` | ⚠️ Pending cleanup |
+| 3 | No structured logging | All backend files | ⚠️ Pending (winston/pino) |
+| 4 | Navbar not mobile responsive | `Navbar.jsx` | ⚠️ Pending |
+
+### ✅ Recently Resolved
+| # | Issue | Resolution |
+|---|-------|------------|
+| 1 | Save/unsave was a no-op (stub controller) | Implemented with `$addToSet`/`$pull` on `User.savedDestinations` |
+| 2 | No input validation on saved-destinations | Added `express-validator` with `isMongoId()` param check |
+| 3 | Zero test coverage | Added 28 integration tests (Jest + Supertest) |
+| 4 | Frontend logout didn't call backend | `logout()` now calls `POST /api/auth/logout` to blacklist tokens |
+| 5 | `description` field missing from destination model | Added to schema with `default: ''` |
+| 6 | Survey routes unprotected | Fixed — both GET and POST require `verifyToken` |
+| 7 | Trending field not in schema | Fixed — added `trending: Boolean` |
+| 8 | No pagination metadata | Fixed — returns `{total, page, totalPages, hasNextPage, hasPrevPage}` |
+| 9 | Refresh token not rotated | Fixed — old refresh token blacklisted on refresh |
 
 ---
 
@@ -88,6 +103,9 @@ cp .env.example .env   # then fill in your values
 
 # Start dev server
 npm run dev            # nodemon watches src/server.js → port 9000
+
+# Run tests
+npm test               # runs 28 integration tests via Jest
 ```
 
 ---

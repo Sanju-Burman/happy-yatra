@@ -164,15 +164,18 @@ Controller Function
 │ email (unique)   │           │ budget                │
 │ password (hash)  │           │ interests[]           │
 │ role (user/admin)│           │ activities[]          │
-└──────────────────┘           │ createdAt             │
-                               └──────────────────────┘
-
+│ savedDestinations│───┐       │ createdAt             │
+│   [ObjectId ref] │   │       └──────────────────────┘
+└──────────────────┘   │
+                       │
 ┌──────────────────────────────────────┐
 │           destinations               │
 │──────────────────────────────────────│
-│ _id, name, imageUrl, averageCost     │
-│ styles[], tags[], activities[]       │
+│ _id, name, imageUrl, averageCost     │◄───┘
+│ styles[], tags[], activities[]       │  (savedDestinations refs)
 │ location, latitude, longitude        │
+│ trending (Boolean)                   │
+│ description (String)                 │
 │ createdAt, updatedAt                 │
 └──────────────────────────────────────┘
 
@@ -185,7 +188,7 @@ Controller Function
 └───────────────────────────────────────┘
 ```
 
-> **Note:** `Survey.user` references `Users._id` via Mongoose `ref`, but **no population (JOIN)** is performed in any controller — raw ObjectId is stored and returned.
+> **Note:** `Survey.user` references `Users._id` via Mongoose `ref`, but **no population (JOIN)** is performed in survey controllers — raw ObjectId is stored and returned. `User.savedDestinations` references `destinations._id` and **is populated** when fetching saved destinations via `saved.controller.js`.
 
 ---
 
@@ -238,14 +241,18 @@ Rules:
 
 | Area | Status | Implementation Details |
 |------|-----------|------------------------|
-| **Input Validation** | ✅ Implemented | Using `express-validator` across all routes. |
+| **Input Validation** | ✅ Implemented | Using `express-validator` across auth, survey, and saved-destinations routes. |
 | **Token Rotation** | ✅ Implemented | Refresh tokens are rotated on each use; old tokens are blacklisted. |
 | **Survey Auth** | ✅ Implemented | Both GET and POST `/api/survey` routes now require valid JWTs. |
 | **Rate Limiting** | ✅ Implemented | Added `express-rate-limit` to all `/api/auth` routes. |
 | **Security Headers**| ✅ Implemented | Integrated `helmet` middleware for HTTP header hardening. |
 | **Data Privacy** | ✅ Implemented | User password hashes are explicitly excluded from profile responses. |
 | **DB Performance** | ✅ Implemented | Added database index to `user` field in the Survey collection. |
-| **Trending Field** | ✅ Fixed | Included `trending` in destination schema and query logic. |
-| **Recommendation Engine**| ⚠️ In Progress | Logic placeholder in `destinations.controller` awaits further refinement. |
+| **Trending Field** | ✅ Implemented | Included `trending` in destination schema and query logic. |
+| **Description Field** | ✅ Implemented | Added `description` field to destination schema (was missing, frontend rendered undefined). |
+| **Save/Unsave** | ✅ Implemented | `savedDestinations` array on User model with `$addToSet`/`$pull` operations and populated reads. |
+| **Recommendation Engine**| ✅ Implemented | Server-side filtering by `travelStyle`, `interests`, and `budget` in `recommendations.controller.js`. |
 | **Pagination Metadata**| ✅ Implemented | All destination lists return full pagination objects. |
+| **Frontend Logout** | ✅ Fixed | `logout()` now calls `POST /api/auth/logout` to blacklist tokens server-side before clearing locally. |
+| **Integration Tests** | ✅ Implemented | 28 tests across auth, saved-destinations, and survey endpoints using Jest + Supertest. |
 | **Logging** | ⚠️ Pending | Future update: integrate structured logger (winston/pino). |

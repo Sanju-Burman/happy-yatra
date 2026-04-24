@@ -348,3 +348,136 @@ To re-enable server-side filtering:
 2. Update to query MongoDB instead of static data array
 3. Add route `POST /api/destinations/recommend` in `recom.routes.js`
 4. Connect to `Survey` data by user for personalized recommendations
+
+---
+
+## 5. Save/Unsave Destination Workflow
+
+### 5.1 Save a Destination
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+POST /api/saved-destinations/:id
+  Authorization: Bearer <token>
+         │
+         ▼
+  [verifyToken middleware]
+  → req.user = {id, role}
+         │
+         ▼
+  [express-validator: param('id').isMongoId()]
+  → Reject 400 if malformed ObjectId
+         │
+         ▼
+  saved.controller.js :: saveDestination()
+  │
+  ├─► Destination.findById(id).lean()  ────────────────────► MongoDB
+  │       ◄ destination | null ◄──────────────────────────────
+  │   null → 404 "Destination not found"
+  │
+  ├─► User.findByIdAndUpdate(
+  │       req.user.id,
+  │       { $addToSet: { savedDestinations: id } },  ──────► MongoDB (UPDATE)
+  │       { new: true }
+  │   )
+  │       ◄ user ◄────────────────────────────────────────────
+  │   null → 404 "User not found"
+  │
+  res.status(200).json({message: "Destination saved successfully"})
+
+  ✅ $addToSet prevents duplicates — saving same destination twice is a no-op
+```
+
+### 5.2 Unsave a Destination
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+DELETE /api/saved-destinations/:id
+  Authorization: Bearer <token>
+         │
+         ▼
+  [verifyToken + isMongoId() validation]
+         │
+         ▼
+  saved.controller.js :: unsaveDestination()
+  │
+  ├─► User.findByIdAndUpdate(
+  │       req.user.id,
+  │       { $pull: { savedDestinations: id } },  ──────────► MongoDB (UPDATE)
+  │       { new: true }
+  │   )
+  │       ◄ user ◄────────────────────────────────────────────
+  │   null → 404 "User not found"
+  │
+  res.status(200).json({message: "Destination removed from saved"})
+```
+
+### 5.3 Get Saved Destinations
+
+```
+Client                         Server                          MongoDB
+──────                         ──────                          ───────
+GET /api/saved-destinations
+  Authorization: Bearer <token>
+         │
+         ▼
+  [verifyToken middleware]
+         │
+         ▼
+  saved.controller.js :: getSavedDestinations()
+  │
+  ├─► User.findById(req.user.id)
+  │       .populate('savedDestinations')
+  │       .lean()  ──────────────────────────────────────────► MongoDB (FIND + POPULATE)
+  │       ◄ user with populated destinations ◄────────────────
+  │   null → 404 "User not found"
+  │
+  res.status(200).json({
+    count: savedDestinations.length,
+    data: savedDestinations   // Full destination objects
+  })
+
+  ✅ Uses Mongoose .populate() to JOIN savedDestinations ObjectId refs
+     with full destination documents
+```
+
+---
+
+## 6. Frontend Logout Workflow (Updated)
+
+```
+Client (React)                 Express Server                  MongoDB
+─────────────                  ──────────────                  ─────────────
+User clicks "Logout"
+         │
+         ▼
+  Navbar :: handleLogout() [async]
+         │
+         ▼
+  api.jsx :: logout() [async]
+  │
+  ├─ getStoredTokens() → {accessToken, refreshToken}
+  │
+  ├─► POST /api/auth/logout  ──────────────────────────────────►
+  │     Body: {accessToken, refreshToken}
+  │                                │
+  │                                ▼
+  │                    auth.service.js :: blacklistTokens()
+  │                    ├─ jwt.decode(accessToken) → exp
+  │                    ├─ jwt.decode(refreshToken) → exp
+  │                    ├─► TokenBlacklist.insertMany([...])  ──► MongoDB (INSERT x2)
+  │                    │       ◄──── OK ◄──────────────────────
+  │   ◄────────────────── {message: "Logout successful"} ◄──────
+  │
+  ├─ clearTokens()    // Remove from localStorage
+  ├─ setAuthToken(null) // Remove from Axios defaults
+  │
+  setUser(null)       // Clear React state
+  navigate('/')       // Redirect to landing
+  toast.success('Logged out successfully')
+
+  ✅ Tokens are blacklisted server-side BEFORE clearing locally
+  ✅ If server call fails, cleanup still proceeds (try/catch/finally)
+```

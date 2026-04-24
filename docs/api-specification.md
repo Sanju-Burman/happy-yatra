@@ -294,7 +294,7 @@ GET /api/destinations?page=1&limit=12&trending=true
 }
 ```
 
-> ⚠️ No pagination metadata (total count, totalPages) is returned currently.
+> ✅ Pagination metadata (total, page, limit, totalPages, hasNextPage, hasPrevPage) is included in the response.
 
 **Error Responses:**
 | Status | Condition | Body |
@@ -411,3 +411,141 @@ Fetch user survey submissions, sorted by newest first.
 | Status | Condition | Body |
 |--------|-----------|------|
 | `500` | DB error | `{"error": "Failed to fetch survey data"}` |
+
+---
+
+## Module 5: Saved Destinations (`/api/saved-destinations`)
+
+All routes in this module require authentication.
+
+---
+
+### GET `/api/saved-destinations`
+
+Fetch the authenticated user's saved destinations with full destination data.
+
+**Auth Required:** ✅ Bearer Token
+
+**Success Response — `200 OK`:**
+```json
+{
+  "success": true,
+  "count": 2,
+  "data": [
+    {
+      "_id": "64xyz789...",
+      "name": "Goa",
+      "imageUrl": "https://...",
+      "averageCost": 3000,
+      "styles": ["Beach"],
+      "tags": ["Relaxation", "Nature"],
+      "activities": ["Swimming"],
+      "location": "Goa, India",
+      "latitude": 15.2993,
+      "longitude": 74.124,
+      "trending": true,
+      "description": "A beautiful beach destination"
+    }
+  ]
+}
+```
+
+**Error Responses:**
+| Status | Condition | Body |
+|--------|-----------|------|
+| `401` | No/invalid token | *(see auth errors)* |
+| `404` | User not found | `{"message": "User not found"}` |
+
+---
+
+### POST `/api/saved-destinations/:id`
+
+Save a destination to the user's saved list. Prevents duplicates via `$addToSet`.
+
+**Auth Required:** ✅ Bearer Token
+
+**Path Parameter:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `id` | MongoDB ObjectId | The destination's `_id` |
+
+> **Validation:** The `:id` parameter is validated via `express-validator` `isMongoId()`. Invalid IDs are rejected with a `400` before reaching the controller.
+
+**Success Response — `200 OK`:**
+```json
+{
+  "success": true,
+  "message": "Destination saved successfully"
+}
+```
+
+**Error Responses:**
+| Status | Condition | Body |
+|--------|-----------|------|
+| `400` | Malformed ObjectId | `{"errors": [{"msg": "Invalid destination ID format", ...}]}` |
+| `401` | No/invalid token | *(see auth errors)* |
+| `404` | Destination not found | `{"message": "Destination not found"}` |
+| `404` | User not found | `{"message": "User not found"}` |
+
+---
+
+### DELETE `/api/saved-destinations/:id`
+
+Remove a destination from the user's saved list.
+
+**Auth Required:** ✅ Bearer Token
+
+**Path Parameter:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `id` | MongoDB ObjectId | The destination's `_id` |
+
+**Success Response — `200 OK`:**
+```json
+{
+  "success": true,
+  "message": "Destination removed from saved"
+}
+```
+
+**Error Responses:**
+| Status | Condition | Body |
+|--------|-----------|------|
+| `400` | Malformed ObjectId | `{"errors": [{"msg": "Invalid destination ID format", ...}]}` |
+| `401` | No/invalid token | *(see auth errors)* |
+| `404` | User not found | `{"message": "User not found"}` |
+
+---
+
+## Module 6: Recommendations (`/api/recommendations`)
+
+---
+
+### POST `/api/recommendations`
+
+Get personalized destination recommendations based on the user's latest survey data.
+
+**Auth Required:** ✅ Bearer Token
+
+**Success Response — `200 OK`:**
+```json
+{
+  "success": true,
+  "count": 5,
+  "data": [
+    {
+      "_id": "64xyz789...",
+      "name": "Goa",
+      ...
+    }
+  ]
+}
+```
+
+> **Note:** The recommendation engine matches destinations by `travelStyle`, `interests` (mapped to `tags`), and `budget`. If no matches are found with strict criteria, it progressively loosens the filters.
+
+**Error Responses:**
+| Status | Condition | Body |
+|--------|-----------|------|
+| `400` | No survey submitted | `{"message": "Please complete the survey first to get recommendations."}` |
+| `401` | No/invalid token | *(see auth errors)* |

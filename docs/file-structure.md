@@ -24,19 +24,27 @@ happy-yatra/                          # Monorepo root
 │   ├── package.json                  # Backend dependencies
 │   ├── package-lock.json
 │   ├── .gitignore
+│   ├── jest.config.js                # Jest test configuration
 │   ├── vercel.json                   # Vercel serverless deployment config
+│   ├── tests/                        # Integration test suite
+│   │   ├── setup.js                  # Test DB connection helper
+│   │   ├── globalSetup.js            # Drops test DB before each run
+│   │   ├── auth.test.js              # Auth endpoint tests (11 tests)
+│   │   ├── saved-destinations.test.js # Save/unsave tests (10 tests)
+│   │   └── survey.test.js            # Survey endpoint tests (7 tests)
 │   └── src/                          # All source code
 │       ├── server.js                 # LOCAL ONLY — HTTP server entry (listen())
 │       ├── app.js                    # Express app factory — CORS, routes, global error handler
 │       ├── config/
 │       │   └── db.js                 # MongoDB connection via mongoose
 │       ├── models/                   # Mongoose schema definitions
-│       │   ├── user.model.js         # Users collection
+│       │   ├── user.model.js         # Users collection (includes savedDestinations)
 │       │   ├── destination.model.js  # destinations collection
 │       │   ├── surveyData.model.js   # Survey collection
 │       │   └── tokenBlocking.model.js # TokenBlacklist collection (TTL)
 │       ├── middlewares/
-│       │   └── Auth.middleware.js    # verifyToken, adminChecks
+│       │   ├── Auth.middleware.js    # verifyToken, adminChecks
+│       │   └── error.js             # Global error handler middleware
 │       ├── services/
 │       │   └── auth.service.js       # login, signup, refresh, blacklistTokens
 │       ├── controllers/
@@ -44,20 +52,27 @@ happy-yatra/                          # Monorepo root
 │       │   ├── user.controller.js    # Handles /api/user/* HTTP layer
 │       │   ├── survey.controller.js  # Handles /api/survey/* HTTP layer
 │       │   ├── destinations.controller.js # Handles /api/destinations/* HTTP layer
-│       │   └── recom.controller.js   # ⚠️ DEAD CODE — fully commented out
-│       └── routes/
-│           ├── auth.routes.js        # Maps /api/auth → auth.controller
-│           ├── user.routes.js        # Maps /api/user → user.controller
-│           ├── survey.routes.js      # Maps /api/survey → survey.controller
-│           └── recom.routes.js       # Maps /api/destinations → destinations.controller
+│       │   ├── saved.controller.js   # Handles /api/saved-destinations/* HTTP layer
+│       │   └── recommendations.controller.js # Handles /api/recommendations/* HTTP layer
+│       ├── routes/
+│       │   ├── auth.routes.js        # Maps /api/auth → auth.controller
+│       │   ├── user.routes.js        # Maps /api/user → user.controller
+│       │   ├── survey.routes.js      # Maps /api/survey → survey.controller
+│       │   ├── recom.routes.js       # Maps /api/destinations → destinations.controller
+│       │   ├── saved-destinations.routes.js # Maps /api/saved-destinations → saved.controller
+│       │   └── recommendations.routes.js   # Maps /api/recommendations → recommendations.controller
+│       └── utils/
+│           └── ErrorResponse.js      # Custom error class with statusCode
 │
 └── frontend/                         # React.js frontend
     ├── package.json
     └── src/
         ├── App.jsx                   # Root component + routing
+        ├── api.jsx                   # Axios API call wrappers
         ├── components/               # Reusable UI components
         ├── pages/                    # Route-level page components
-        └── services/                 # Axios API call wrappers
+        ├── hooks/                    # Custom React hooks
+        └── lib/                      # Utility functions
 ```
 
 ---
@@ -86,8 +101,8 @@ happy-yatra/                          # Monorepo root
 
 | File | Collection | Purpose |
 |------|-----------|---------|
-| `user.model.js` | `Users` | Auth identity, roles |
-| `destination.model.js` | `destinations` | Travel destination catalog |
+| `user.model.js` | `Users` | Auth identity, roles, saved destinations (ObjectId refs) |
+| `destination.model.js` | `destinations` | Travel destination catalog (includes `description`, `trending`) |
 | `surveyData.model.js` | `Survey` | User travel preferences |
 | `tokenBlocking.model.js` | `TokenBlacklist` | Invalidated JWT tokens (TTL auto-purge) |
 
@@ -110,7 +125,8 @@ happy-yatra/                          # Monorepo root
 | `user.controller.js` | `profileDetails` | `user.routes.js` |
 | `survey.controller.js` | `submitSurvey`, `getSurvey` | `survey.routes.js` |
 | `destinations.controller.js` | `getDestinations`, `getDestinationById` | `recom.routes.js` |
-| `recom.controller.js` | *(all commented out)* | *(not active)* |
+| `saved.controller.js` | `getSavedDestinations`, `saveDestination`, `unsaveDestination` | `saved-destinations.routes.js` |
+| `recommendations.controller.js` | `getRecommendations` | `recommendations.routes.js` |
 
 ### `src/routes/`
 
@@ -118,8 +134,10 @@ happy-yatra/                          # Monorepo root
 |------|-------------|-----------|---------|
 | `auth.routes.js` | `/api/auth` | `verifyToken` on `/data` only | login, signup, logout, refresh |
 | `user.routes.js` | `/api/user` | `verifyToken` on `/profile` | profileDetails |
-| `survey.routes.js` | `/api/survey` | `verifyToken` | submitSurvey, getSurvey |
+| `survey.routes.js` | `/api/survey` | `verifyToken` + `express-validator` | submitSurvey, getSurvey |
 | `recom.routes.js` | `/api/destinations` | None | getDestinations, getDestinationById |
+| `saved-destinations.routes.js` | `/api/saved-destinations` | `verifyToken` + `isMongoId()` validation | getSaved, save, unsave |
+| `recommendations.routes.js` | `/api/recommendations` | `verifyToken` | getRecommendations |
 
 ### `vercel.json`
 - **Role**: Vercel deployment configuration.

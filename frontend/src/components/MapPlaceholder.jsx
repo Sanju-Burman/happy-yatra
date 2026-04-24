@@ -1,6 +1,65 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapPin } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import { getConfig } from '@/api.jsx';
+
+const containerStyle = {
+  width: '100%',
+  height: '100%'
+};
+
+const defaultCenter = {
+  lat: 20.5937,
+  lng: 78.9629 // Center of India approximate
+};
+
+const ActiveMap = ({ apiKey, destinations }) => {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: apiKey
+  });
+
+  const center = useMemo(() => {
+    if (destinations && destinations.length > 0) {
+      if (destinations[0].latitude && destinations[0].longitude) {
+        return { lat: destinations[0].latitude, lng: destinations[0].longitude };
+      }
+    }
+    return defaultCenter;
+  }, [destinations]);
+
+  if (!isLoaded) {
+    return (
+      <div className="w-full h-96 bg-muted animate-pulse rounded-xl flex items-center justify-center border border-border">
+        <p className="text-muted-foreground font-medium">Loading Map...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="google-map" className="w-full h-96 rounded-xl overflow-hidden border border-border">
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={5}
+        options={{ disableDefaultUI: true, zoomControl: true }}
+      >
+        {destinations.map((dest, idx) => {
+          if (dest.latitude && dest.longitude) {
+            return (
+              <Marker 
+                key={dest._id || idx}
+                position={{ lat: dest.latitude, lng: dest.longitude }}
+                title={dest.name}
+              />
+            );
+          }
+          return null;
+        })}
+      </GoogleMap>
+    </div>
+  );
+};
 
 const MapPlaceholder = ({ destinations = [] }) => {
   const [apiKey, setApiKey] = useState('');
@@ -9,7 +68,9 @@ const MapPlaceholder = ({ destinations = [] }) => {
     const fetchConfig = async () => {
       try {
         const config = await getConfig();
-        setApiKey(config.google_maps_api_key);
+        if (config && config.google_maps_api_key) {
+          setApiKey(config.google_maps_api_key);
+        }
       } catch (error) {
         console.error('Error fetching config:', error);
       }
@@ -45,11 +106,7 @@ const MapPlaceholder = ({ destinations = [] }) => {
     );
   }
 
-  return (
-    <div data-testid="google-map" className="w-full h-96 bg-muted rounded-xl overflow-hidden border border-border">
-      <p className="p-4 text-center text-muted-foreground">Google Maps will load here with API key</p>
-    </div>
-  );
+  return <ActiveMap apiKey={apiKey} destinations={destinations} />;
 };
 
 export default MapPlaceholder;

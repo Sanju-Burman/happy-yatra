@@ -1,20 +1,21 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
+const logger = require('../utils/logger');
 
 let isConnected = false;
 
 const connectDB = async () => {
     if (isConnected) {
-        console.log("Using existing MongoDB connection");
+        logger.debug("Using existing MongoDB connection");
         return;
     }
 
     try {
         const db = await mongoose.connect(process.env.MONGO_DB);
         isConnected = db.connections[0].readyState;
-        console.log("MongoDB Connected Successfully!");
+        logger.info("MongoDB Connected Successfully!");
     } catch (error) {
-        console.error("MongoDB Connection Failed:", error.message);
+        logger.error(`MongoDB Connection Failed: ${error.message}`);
         // Do not throw error here, let the handler catch it if needed, 
         // or check connection status before DB operations
         isConnected = false;

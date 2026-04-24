@@ -56,8 +56,21 @@ export const login = async (email, password) => {
   return response.data;
 };
 
-export const logout = () => {
-  clearTokens();
+export const logout = async () => {
+  try {
+    const { accessToken, refreshToken } = getStoredTokens();
+    if (accessToken && refreshToken) {
+      await axios.post(`${API}/auth/logout`, {
+        accessToken,
+        refreshToken,
+      });
+    }
+  } catch (error) {
+    // Proceed with local cleanup even if the backend call fails
+    console.error('Backend logout failed:', error);
+  } finally {
+    clearTokens();
+  }
 };
 
 export const refreshAccessToken = async () => {

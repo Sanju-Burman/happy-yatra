@@ -8,7 +8,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['user', 'admin'],
         default: 'user'
-    }
+    },
+    savedDestinations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'destinations'
+    }]
 });
 
 module.exports = mongoose.model('Users', userSchema);

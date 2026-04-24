@@ -9,8 +9,8 @@ const Navbar = ({ user, setUser }) => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setUser(null);
     toast.success('Logged out successfully');
     navigate('/');

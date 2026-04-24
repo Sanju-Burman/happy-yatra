@@ -70,23 +70,24 @@ CORS_ORIGIN=http://localhost:5173,https://happyyatra.netlify.app
 
 | # | Issue | Location | Status |
 |---|-------|----------|--------|
-| 1 | Google Map integration incomplete | `MapPlaceholder.jsx` | ⚠️ In Progress |
-| 2 | `recom.controller.js` contains dead code | `controllers/` | ⚠️ Pending cleanup |
-| 3 | No structured logging | All backend files | ⚠️ Pending (winston/pino) |
-| 4 | Navbar not mobile responsive | `Navbar.jsx` | ⚠️ Pending |
+| - | No remaining high-priority technical debt | - | - |
 
 ### ✅ Recently Resolved
 | # | Issue | Resolution |
 |---|-------|------------|
-| 1 | Save/unsave was a no-op (stub controller) | Implemented with `$addToSet`/`$pull` on `User.savedDestinations` |
-| 2 | No input validation on saved-destinations | Added `express-validator` with `isMongoId()` param check |
-| 3 | Zero test coverage | Added 28 integration tests (Jest + Supertest) |
-| 4 | Frontend logout didn't call backend | `logout()` now calls `POST /api/auth/logout` to blacklist tokens |
-| 5 | `description` field missing from destination model | Added to schema with `default: ''` |
-| 6 | Survey routes unprotected | Fixed — both GET and POST require `verifyToken` |
-| 7 | Trending field not in schema | Fixed — added `trending: Boolean` |
-| 8 | No pagination metadata | Fixed — returns `{total, page, totalPages, hasNextPage, hasPrevPage}` |
-| 9 | Refresh token not rotated | Fixed — old refresh token blacklisted on refresh |
+| 1 | Google Map integration incomplete | Implemented `@react-google-maps/api` with markers in `MapPlaceholder.jsx` |
+| 2 | `recom.controller.js` contains dead code | Cleaned up unused functions and renamed `recom.routes.js` to `destinations.routes.js` |
+| 3 | No structured logging | Implemented `winston` globally in backend via `logger.js` |
+| 4 | Navbar not mobile responsive | Added hamburger menu and sliding drawer with `framer-motion` |
+| 5 | Save/unsave was a no-op (stub controller) | Implemented with `$addToSet`/`$pull` on `User.savedDestinations` |
+| 6 | No input validation on saved-destinations | Added `express-validator` with `isMongoId()` param check |
+| 7 | Zero test coverage | Added 28 integration tests (Jest + Supertest) |
+| 8 | Frontend logout didn't call backend | `logout()` now calls `POST /api/auth/logout` to blacklist tokens |
+| 9 | `description` field missing from destination model | Added to schema with `default: ''` |
+| 10| Survey routes unprotected | Fixed — both GET and POST require `verifyToken` |
+| 11| Trending field not in schema | Fixed — added `trending: Boolean` |
+| 12| No pagination metadata | Fixed — returns `{total, page, totalPages, hasNextPage, hasPrevPage}` |
+| 13| Refresh token not rotated | Fixed — old refresh token blacklisted on refresh |
 
 ---
 

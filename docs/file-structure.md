@@ -58,7 +58,7 @@ happy-yatra/                          # Monorepo root
 │       │   ├── auth.routes.js        # Maps /api/auth → auth.controller
 │       │   ├── user.routes.js        # Maps /api/user → user.controller
 │       │   ├── survey.routes.js      # Maps /api/survey → survey.controller
-│       │   ├── recom.routes.js       # Maps /api/destinations → destinations.controller
+│       │   ├── destinations.routes.js # Maps /api/destinations → destinations.controller
 │       │   ├── saved-destinations.routes.js # Maps /api/saved-destinations → saved.controller
 │       │   └── recommendations.routes.js   # Maps /api/recommendations → recommendations.controller
 │       └── utils/
@@ -124,7 +124,7 @@ happy-yatra/                          # Monorepo root
 | `auth.controller.js` | `login`, `signup`, `logout`, `refresh` | `auth.routes.js` |
 | `user.controller.js` | `profileDetails` | `user.routes.js` |
 | `survey.controller.js` | `submitSurvey`, `getSurvey` | `survey.routes.js` |
-| `destinations.controller.js` | `getDestinations`, `getDestinationById` | `recom.routes.js` |
+| `destinations.controller.js` | `getDestinations`, `getDestinationById` | `destinations.routes.js` |
 | `saved.controller.js` | `getSavedDestinations`, `saveDestination`, `unsaveDestination` | `saved-destinations.routes.js` |
 | `recommendations.controller.js` | `getRecommendations` | `recommendations.routes.js` |
 
@@ -135,7 +135,7 @@ happy-yatra/                          # Monorepo root
 | `auth.routes.js` | `/api/auth` | `verifyToken` on `/data` only | login, signup, logout, refresh |
 | `user.routes.js` | `/api/user` | `verifyToken` on `/profile` | profileDetails |
 | `survey.routes.js` | `/api/survey` | `verifyToken` + `express-validator` | submitSurvey, getSurvey |
-| `recom.routes.js` | `/api/destinations` | None | getDestinations, getDestinationById |
+| `destinations.routes.js` | `/api/destinations` | None | getDestinations, getDestinationById |
 | `saved-destinations.routes.js` | `/api/saved-destinations` | `verifyToken` + `isMongoId()` validation | getSaved, save, unsave |
 | `recommendations.routes.js` | `/api/recommendations` | `verifyToken` | getRecommendations |
 

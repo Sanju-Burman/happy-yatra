@@ -7,8 +7,10 @@ const PORT = process.env.PORT || 9000;
 // Connect to Database
 connectDB();
 
+const logger = require('./utils/logger');
+
 // Start Server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log(`API available at http://localhost:${PORT}/api`);
+    logger.info(`Server is running on http://localhost:${PORT}`);
+    logger.info(`API available at http://localhost:${PORT}/api`);
 });

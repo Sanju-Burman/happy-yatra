@@ -8,7 +8,7 @@ const errorHandler = require('./middlewares/error');
 const userRoutes = require('./routes/user.routes');
 const authRoutes = require('./routes/auth.routes');
 const surveyRoutes = require('./routes/survey.routes');
-const recommendationRoutes = require('./routes/recom.routes');
+const destinationRoutes = require('./routes/destinations.routes');
 const personalizedRecomRoutes = require('./routes/recommendations.routes');
 const savedDestinationsRoutes = require('./routes/saved-destinations.routes');
 const configRoutes = require('./routes/config.routes');
@@ -75,7 +75,7 @@ app.get("/", (req, res) => {
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/survey', surveyRoutes);
-app.use('/api/destinations', recommendationRoutes);
+app.use('/api/destinations', destinationRoutes);
 app.use('/api/recommendations', personalizedRecomRoutes);
 app.use('/api/saved-destinations', savedDestinationsRoutes);
 app.use('/api/config', configRoutes);

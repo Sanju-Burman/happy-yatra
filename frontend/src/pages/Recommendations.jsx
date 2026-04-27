@@ -103,7 +103,7 @@ const Recommendations = () => {
             <div data-testid="recommendations-grid" className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {destinations?.length > 0 && destinations.map((destination, idx) => (
                 <motion.div
-                  key={destination.id}
+                  key={destination._id || destination.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: idx * 0.1 }}

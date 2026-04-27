@@ -6,8 +6,14 @@ const errorHandler = (err, req, res, next) => {
     let error = { ...err };
     error.message = err.message;
 
-    // Log the error
-    logger.error(err);
+    const statusCode = error.statusCode || 500;
+
+    // Log the error appropriately
+    if (statusCode >= 500) {
+        logger.error(err);
+    } else {
+        logger.warn(`[${statusCode}] ${err.message}`);
+    }
 
     // Mongoose bad ObjectId
     if (err.name === 'CastError') {

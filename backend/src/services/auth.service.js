@@ -2,16 +2,17 @@ const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const TokenBlacklist = require('../models/tokenBlocking.model');
+const ErrorResponse = require('../utils/ErrorResponse');
 
 const login = async (email, password) => {
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-        throw new Error("Invalid email or password");
+        throw new ErrorResponse("Invalid email or password", 401);
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-        throw new Error("Invalid email or password");
+        throw new ErrorResponse("Invalid email or password", 401);
     }
 
     const payload = { sub: user._id.toString(), role: user.role };
@@ -32,7 +33,7 @@ const login = async (email, password) => {
 const signup = async (username, email, password) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        throw new Error("User already exists");
+        throw new ErrorResponse("User already exists", 400);
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -50,12 +51,12 @@ const signup = async (username, email, password) => {
 
 const refresh = async (refreshToken) => {
     if (!refreshToken) {
-        throw new Error('Refresh Token required');
+        throw new ErrorResponse('Refresh Token required', 400);
     }
 
     const blacklisted = await TokenBlacklist.findOne({ token: refreshToken });
     if (blacklisted) {
-        throw new Error('Invalid token');
+        throw new ErrorResponse('Invalid token', 401);
     }
 
     try {
@@ -81,7 +82,7 @@ const refresh = async (refreshToken) => {
 
         return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     } catch (err) {
-        throw new Error('Invalid refresh token');
+        throw new ErrorResponse('Invalid refresh token', 401);
     }
 };
 
@@ -112,7 +113,7 @@ const blacklistTokens = async (accessToken, refreshToken) => {
             await TokenBlacklist.insertMany(tokensToBlacklist);
         }
     } catch (error) {
-        throw new Error('Failed to blacklist tokens: ' + error.message);
+        throw new ErrorResponse('Failed to blacklist tokens: ' + error.message, 500);
     }
 };
 

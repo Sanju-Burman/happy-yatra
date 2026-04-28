@@ -53,14 +53,16 @@ happy-yatra/                          # Monorepo root
 │       │   ├── survey.controller.js  # Handles /api/survey/* HTTP layer
 │       │   ├── destinations.controller.js # Handles /api/destinations/* HTTP layer
 │       │   ├── saved.controller.js   # Handles /api/saved-destinations/* HTTP layer
-│       │   └── recommendations.controller.js # Handles /api/recommendations/* HTTP layer
+│       │   ├── recommendations.controller.js # Handles /api/recommendations/* HTTP layer
+│       │   └── admin.controller.js   # Handles /api/admin/* (CRUD & Analytics)
 │       ├── routes/
 │       │   ├── auth.routes.js        # Maps /api/auth → auth.controller
 │       │   ├── user.routes.js        # Maps /api/user → user.controller
 │       │   ├── survey.routes.js      # Maps /api/survey → survey.controller
 │       │   ├── destinations.routes.js # Maps /api/destinations → destinations.controller
 │       │   ├── saved-destinations.routes.js # Maps /api/saved-destinations → saved.controller
-│       │   └── recommendations.routes.js   # Maps /api/recommendations → recommendations.controller
+│       │   ├── recommendations.routes.js   # Maps /api/recommendations → recommendations.controller
+│       │   └── admin.routes.js       # Maps /api/admin → admin.controller
 │       └── utils/
 │           └── ErrorResponse.js      # Custom error class with statusCode
 │
@@ -127,6 +129,7 @@ happy-yatra/                          # Monorepo root
 | `destinations.controller.js` | `getDestinations`, `getDestinationById` | `destinations.routes.js` |
 | `saved.controller.js` | `getSavedDestinations`, `saveDestination`, `unsaveDestination` | `saved-destinations.routes.js` |
 | `recommendations.controller.js` | `getRecommendations` | `recommendations.routes.js` |
+| `admin.controller.js` | `listDestinations`, `createDestination`, `updateDestination`, `deleteDestination`, `toggleTrending`, `listUsers`, `getUserSurvey`, `getAnalytics` | `admin.routes.js` |
 
 ### `src/routes/`
 
@@ -138,6 +141,7 @@ happy-yatra/                          # Monorepo root
 | `destinations.routes.js` | `/api/destinations` | None | getDestinations, getDestinationById |
 | `saved-destinations.routes.js` | `/api/saved-destinations` | `verifyToken` + `isMongoId()` validation | getSaved, save, unsave |
 | `recommendations.routes.js` | `/api/recommendations` | `verifyToken` | getRecommendations |
+| `admin.routes.js` | `/api/admin` | `verifyToken` + `adminChecks` | listDestinations, createDestination, updateDestination, deleteDestination, toggleTrending, listUsers, getUserSurvey, getAnalytics |
 
 ### `vercel.json`
 - **Role**: Vercel deployment configuration.

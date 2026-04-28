@@ -13,6 +13,6 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'destinations'
     }]
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Users', userSchema);

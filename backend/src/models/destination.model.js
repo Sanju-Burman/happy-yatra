@@ -55,6 +55,10 @@ const DestinationSchema = new mongoose.Schema({
     description: {
         type: String,
         default: ''
+    },
+    viewCount: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

@@ -549,3 +549,83 @@ Get personalized destination recommendations based on the user's latest survey d
 |--------|-----------|------|
 | `400` | No survey submitted | `{"message": "Please complete the survey first to get recommendations."}` |
 | `401` | No/invalid token | *(see auth errors)* |
+
+---
+
+## Module 7: Admin Panel (`/api/admin`)
+
+This module requires a valid JWT with the `admin` role.
+
+### GET `/api/admin/analytics`
+Fetches platform statistics and data for charts.
+
+**Auth Required:** ✅ Admin
+
+**Success Response — `200 OK`:**
+```json
+{
+  "totals": { "users": 150, "destinations": 45, "surveys": 110, "trending": 8 },
+  "surveyCompletionRate": "73.3",
+  "topDestinations": [ { "name": "Goa", "viewCount": 250, "trending": true } ],
+  "signupsByDay": [ { "_id": "2023-10-01", "count": 5 } ],
+  "surveyInterests": [ { "_id": "nature", "count": 45 } ],
+  "surveyBudgets": [ { "_id": "Adventure", "count": 30 } ]
+}
+```
+
+---
+
+### GET `/api/admin/destinations`
+Paginated list of all destinations for administrative management.
+
+**Auth Required:** ✅ Admin
+
+**Query Params:** `page`, `limit` (Default: 1, 20)
+
+---
+
+### POST `/api/admin/destinations`
+Create a new destination.
+
+**Auth Required:** ✅ Admin
+
+**Request Body:** Similar to Destination schema. `viewCount` is ignored.
+
+---
+
+### PUT `/api/admin/destinations/:id`
+Update an existing destination.
+
+**Auth Required:** ✅ Admin
+
+**Note:** `viewCount` is protected and cannot be updated via this endpoint.
+
+---
+
+### DELETE `/api/admin/destinations/:id`
+Delete a destination from the catalog.
+
+**Auth Required:** ✅ Admin
+
+---
+
+### PATCH `/api/admin/destinations/:id/trending`
+Toggle the trending status of a destination.
+
+**Auth Required:** ✅ Admin
+
+---
+
+### GET `/api/admin/users`
+Paginated list of registered users.
+
+**Auth Required:** ✅ Admin
+
+**Note:** Returns user details excluding passwords.
+
+---
+
+### GET `/api/admin/users/:id/survey`
+Fetch specific survey results for a given user ID.
+
+**Auth Required:** ✅ Admin

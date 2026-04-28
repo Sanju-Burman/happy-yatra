@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, MapPin, ClipboardCheck, Zap, 
-  TrendingUp, ArrowUpRight, BarChart, PieChart as PieChartIcon
+  TrendingUp, ArrowUpRight, BarChart as BarChartIcon, PieChart as PieChartIcon
 } from 'lucide-react';
 import { adminGetAnalytics } from '@/api.jsx';
 import { 
@@ -114,7 +114,7 @@ export default function AdminAnalytics() {
         <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart className="text-primary" size={20} /> User Signups
+              <BarChartIcon className="text-primary" size={20} /> User Signups
             </CardTitle>
             <CardDescription>Daily enrollment over the last 30 days</CardDescription>
           </CardHeader>

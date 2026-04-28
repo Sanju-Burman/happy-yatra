@@ -294,7 +294,7 @@ tokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
              └──────────────┬─────────────────────┘
                             │
                   ┌─────────▼──────────┐
-                  │   Route Module      │ (auth/user/survey/recom routes)
+                  │   Route Module      │ (auth/user/survey/destinations/recommendations/saved routes)
                   └─────────┬──────────┘
                             │ applies middleware chain
                   ┌─────────▼──────────┐
@@ -323,31 +323,35 @@ tokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 ---
 
-## 7. Data Flow: Recommendation Engine (Current vs Intended)
+## 7. Data Flow: Recommendation Engine
 
-### Current State (Functional)
-- Destinations are stored in MongoDB with `styles[]`, `tags[]`, `activities[]`, `averageCost` fields.
-- Client fetches all and filters client-side, OR uses `trending=true` to filter server-side.
-- `recom.controller.js` is fully **commented out** — its filter logic does NOT run.
+### Current State (Live — `recommendations.controller.js`)
+- Route: `POST /api/recommendations` (requires `verifyToken`)
+- Fetches the user's latest `Survey` document (sorted by `createdAt` desc)
+- Builds a MongoDB `$or` query matching `styles` ∋ `travelStyle` OR `tags` ∩ `interests`
+- Applies budget filtering: budget levels 1–3 map to cost limits ($2k / $5k / $10k); level 4 (luxury) has no cap
+- Falls back progressively: strict budget → loose (style/tags only) → any 10 destinations
+- Returns `{success, count, data: Destination[]}`
 
-### Original Intent (Commented-Out Logic)
-```javascript
-// POST /api/destinations — Body: {travelStyle, budget, interests[], activities[]}
-const matches = destinations.filter(dest => {
-    const matchesStyle = dest.styles.includes(travelStyle);
-    const matchesBudget = dest.averageCost <= budget;
-    const matchesInterest = dest.tags.some(tag => interests.includes(tag));
-    const matchesActivity = dest.activities.some(act => activities.includes(act));
-    return matchesStyle && matchesBudget && (matchesInterest || matchesActivity);
-});
 ```
-
-### Recommendation Activation Plan
-To re-enable server-side filtering:
-1. Uncomment logic in `recom.controller.js`
-2. Update to query MongoDB instead of static data array
-3. Add route `POST /api/destinations/recommend` in `recom.routes.js`
-4. Connect to `Survey` data by user for personalized recommendations
+POST /api/recommendations
+  Authorization: Bearer <token>
+         │
+         ▼
+  recommendations.controller.js :: getRecommendations()
+  │
+  ├─► Survey.findOne({user: userId}).sort({createdAt: -1}).lean() ──► MongoDB
+  │       ◄ survey | null ◄───────────────────────────────────────────
+  │   null → 400 "Please complete the survey first"
+  │
+  ├─ Build query: {$or: [{styles: {$in: [travelStyle]}}, {tags: {$in: interests}}]}
+  ├─ Apply budget filter (costLimit based on budget level)
+  │
+  ├─► Destination.find(query).limit(10).lean() ───────────────────► MongoDB
+  │       ◄ Destination[] ◄──────────────────────────────────────────
+  │
+  res.json({success: true, count, data: recommended})
+```
 
 ---
 

@@ -77,7 +77,7 @@ const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
           <button
             onClick={handleSaveToggle}
             disabled={savingState}
-            data-testid={`save-button-${destination.id}`}
+            data-testid={`save-button-${destination._id}`}
             className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm rounded-full p-2 hover:bg-card transition-all shadow-lg z-10 disabled:opacity-50"
           >
             <Heart
@@ -98,19 +98,19 @@ const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <div className="flex items-center gap-1 mb-2 text-white/90">
             <MapPin className="w-4 h-4" strokeWidth={1.5} />
-            <span className="text-sm font-mono uppercase tracking-wide">{destination.country}</span>
+            <span className="text-sm font-mono uppercase tracking-wide">{destination.location}</span>
           </div>
           <h3 className="font-heading text-2xl font-bold text-white mb-2 tracking-tight">
             {destination.name}
           </h3>
-          <p className="text-white/80 text-sm line-clamp-2">{destination.description}</p>
+          <p className="text-white/80 text-sm line-clamp-2">{destination.description || `Explore the wonders of ${destination.name} in ${destination.location}.`}</p>
 
           <div className="flex flex-wrap gap-2 mt-4">
             <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium capitalize">
-              {destination.category}
+              {destination.styles?.[0] || destination.category || 'Travel'}
             </span>
             <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium capitalize">
-              {destination.budget_level}
+              ${destination.averageCost || destination.budget_level || 'N/A'}
             </span>
           </div>
         </div>

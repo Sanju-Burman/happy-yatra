@@ -51,6 +51,10 @@ const DestinationSchema = new mongoose.Schema({
     trending: {
         type: Boolean,
         default: false
+    },
+    description: {
+        type: String,
+        default: ''
     }
 }, { timestamps: true });
 

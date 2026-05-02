@@ -42,12 +42,16 @@ backend/
     │   ├── user.controller.js   # profileDetails
     │   ├── survey.controller.js # submitSurvey, getSurvey
     │   ├── destinations.controller.js # getDestinations (paginated), getDestinationById
-    │   └── recom.controller.js  # DEPRECATED — all logic commented out
+    │   ├── recommendations.controller.js # getRecommendations (personalized based on survey)
+    │   └── saved.controller.js  # save, unsave, getSavedDestinations
     └── routes/
         ├── auth.routes.js       # /api/auth/*
         ├── user.routes.js       # /api/user/*
         ├── survey.routes.js     # /api/survey/*
-        └── recom.routes.js      # /api/destinations/* (uses destinations.controller, not recom.controller)
+        ├── destinations.routes.js     # /api/destinations/*
+        ├── recommendations.routes.js  # /api/recommendations/*
+        ├── saved-destinations.routes.js # /api/saved-destinations/*
+        └── config.routes.js     # /api/config/*
 ```
 
 ---
@@ -104,6 +108,18 @@ backend/
 |--------|------|------|------|----------|
 | GET | `/` | ❌ | `page`, `limit`, `trending=true` | `Destination[]` |
 | GET | `/:id` | ❌ | — | `Destination` |
+
+### Recommendations — `/api/recommendations`
+| Method | Path | Auth | Body | Response |
+|--------|------|------|------|----------|
+| POST | `/` | ✅ Bearer | — | `{success, count, data: Destination[]}` |
+
+### Saved Destinations — `/api/saved-destinations`
+| Method | Path | Auth | Body | Response |
+|--------|------|------|------|----------|
+| GET | `/` | ✅ Bearer | — | Saved destinations for user |
+| POST | `/:id` | ✅ Bearer | — | Save a destination |
+| DELETE | `/:id` | ✅ Bearer | — | Unsave a destination |
 
 ---
 

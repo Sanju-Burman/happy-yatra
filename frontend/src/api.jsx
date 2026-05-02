@@ -56,8 +56,21 @@ export const login = async (email, password) => {
   return response.data;
 };
 
-export const logout = () => {
-  clearTokens();
+export const logout = async () => {
+  try {
+    const { accessToken, refreshToken } = getStoredTokens();
+    if (accessToken && refreshToken) {
+      await axios.post(`${API}/auth/logout`, {
+        accessToken,
+        refreshToken,
+      });
+    }
+  } catch (error) {
+    // Proceed with local cleanup even if the backend call fails
+    console.error('Backend logout failed:', error);
+  } finally {
+    clearTokens();
+  }
 };
 
 export const refreshAccessToken = async () => {
@@ -70,21 +83,54 @@ export const refreshAccessToken = async () => {
   return access_token;
 };
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/auth/refresh')) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest._retry = true;
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          return axios(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
-        await refreshAccessToken();
+        const newAccessToken = await refreshAccessToken();
+        processQueue(null, newAccessToken);
+        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         return axios(originalRequest);
       } catch (refreshError) {
+        processQueue(refreshError, null);
         clearTokens();
         window.location.href = '/login';
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

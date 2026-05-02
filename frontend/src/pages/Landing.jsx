@@ -6,7 +6,8 @@ import { getDestinations } from '@/api.jsx';
 import DestinationCard from '@/components/DestinationCard.jsx';
 
 const Landing = ({ user }) => {
-  const [allDestinations, setAllDestinations] = useState([]);
+  const [trendingDestinations, setTrendingDestinations] = useState([]);
+  const [otherDestinations, setOtherDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewLimit, setViewLimit] = useState(10);
 
@@ -28,9 +29,12 @@ const Landing = ({ user }) => {
       try {
         const response = await getDestinations(1, 20);
         const data = Array.isArray(response.data) ? response.data : [];
-        // Sort by trending first
-        const sorted = [...data].sort((a, b) => (b.trending ? 1 : 0) - (a.trending ? 1 : 0));
-        setAllDestinations(sorted);
+        
+        const trending = data.filter(d => d.trending === true);
+        const others = data.filter(d => d.trending !== true);
+        
+        setTrendingDestinations(trending);
+        setOtherDestinations(others);
       } catch (error) {
         console.error('Error fetching destinations:', error);
       } finally {
@@ -40,7 +44,9 @@ const Landing = ({ user }) => {
     fetchDestinations();
   }, []);
 
-  const displayedItems = allDestinations.slice(0, viewLimit);
+  const displayedTrending = trendingDestinations.slice(0, viewLimit);
+  const remainingLimit = Math.max(0, viewLimit - displayedTrending.length);
+  const displayedOthers = otherDestinations.slice(0, remainingLimit);
 
   return (
     <div data-testid="landing-page" className="relative">
@@ -163,23 +169,67 @@ const Landing = ({ user }) => {
             <div className="text-center py-12">Loading destinations...</div>
           ) : (
             <>
-              {displayedItems.length === 0 ? (
+              {displayedTrending.length === 0 && displayedOthers.length === 0 ? (
                 <div data-testid="empty-state" className="col-span-full text-center py-12 text-muted-foreground bg-muted/30 rounded-2xl border-2 border-dashed border-border">
-                  <p className="text-lg">No trending destinations available at the moment.</p>
+                  <p className="text-lg">No destinations available at the moment.</p>
                 </div>
               ) : (
-                <div data-testid="destinations-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {displayedItems.map((destination, idx) => (
-                    <motion.div
-                      key={destination._id || destination.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: (idx % 4) * 0.1 }}
-                      viewport={{ once: true }}
-                    >
-                      <DestinationCard destination={destination} showSaveButton={!!user} />
-                    </motion.div>
-                  ))}
+                <div className="space-y-16">
+                  {/* Trending Section */}
+                  {displayedTrending.length > 0 && (
+                    <div data-testid="trending-section">
+                      <div className="flex items-center justify-between mb-8">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                            <span className="font-mono text-xs uppercase tracking-wide text-primary">Featured</span>
+                          </div>
+                          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">Trending Destinations</h2>
+                        </div>
+                      </div>
+                      <div data-testid="trending-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        {displayedTrending.map((destination, idx) => (
+                          <motion.div
+                            key={destination._id || destination.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: (idx % 4) * 0.1 }}
+                            viewport={{ once: true }}
+                          >
+                            <DestinationCard destination={destination} showSaveButton={!!user} />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Other Section (Independent) */}
+                  {displayedOthers.length > 0 && (
+                    <div data-testid="others-section">
+                      <div className="flex items-center justify-between mb-8">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                            <span className="font-mono text-xs uppercase tracking-wide text-primary">Discover More</span>
+                          </div>
+                          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">Explore Our Recommendations</h2>
+                        </div>
+                      </div>
+                      <div data-testid="others-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        {displayedOthers.map((destination, idx) => (
+                          <motion.div
+                            key={destination._id || destination.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: (idx % 4) * 0.1 }}
+                            viewport={{ once: true }}
+                          >
+                            <DestinationCard destination={destination} showSaveButton={!!user} />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>

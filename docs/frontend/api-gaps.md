@@ -6,38 +6,32 @@
 
 ## Critical Gaps (App-Breaking)
 
-### GAP-1: `/api/recommendations` endpoint missing
+### ~~GAP-1: `/api/recommendations` endpoint missing~~ ✅ RESOLVED
 
 | Item | Detail |
 |------|--------|
-| **Frontend calls** | `POST /api/recommendations` (`getRecommendations()` in `api.jsx`) |
-| **Backend provides** | ❌ No such route — `recom.controller.js` is fully commented out |
-| **Impact** | `/recommendations` page always fails — shows error state |
-| **Fix** | Either implement the recommendation engine on backend OR change frontend to GET `/api/destinations` with filter params |
+| **Status** | ✅ Implemented in `recommendations.controller.js` + `recommendations.routes.js` |
+| **Route** | `POST /api/recommendations` (requires `verifyToken`) |
+| **Behavior** | Fetches user's survey, builds personalized query, returns matched destinations |
 
 ---
 
-### GAP-2: `/api/saved-destinations` endpoints missing
+### ~~GAP-2: `/api/saved-destinations` endpoints missing~~ ✅ RESOLVED
 
 | Item | Detail |
 |------|--------|
-| **Frontend calls** | `POST /api/saved-destinations/:id` (save), `DELETE /api/saved-destinations/:id` (unsave), `GET /api/saved-destinations` (list) |
-| **Backend provides** | ❌ None of these routes exist |
-| **Impact** | Save/unsave feature broken on all pages. Profile's saved destinations always empty. DestinationDetail save toggle non-functional |
-| **Fix (Backend)** | Add `savedDestinations[]` field to User model, create `saved-destinations` route + controller |
-| **Fix (Frontend Temp)** | Wrap calls in try/catch (currently done), show appropriate empty state |
+| **Status** | ✅ Implemented in `saved.controller.js` + `saved-destinations.routes.js` |
+| **Routes** | `GET /`, `POST /:id`, `DELETE /:id` — all require `verifyToken` |
+| **Behavior** | Uses `$addToSet`/`$pull` on `User.savedDestinations` with `isMongoId()` validation |
 
 ---
 
-### GAP-3: `/api/config` endpoint missing
+### ~~GAP-3: `/api/config` endpoint missing~~ ✅ RESOLVED
 
 | Item | Detail |
 |------|--------|
-| **Frontend calls** | `GET /api/config` (`getConfig()` in `MapPlaceholder.jsx`) |
-| **Backend provides** | ❌ No such route |
-| **Impact** | `MapPlaceholder` always shows placeholder — never loads Google Maps |
-| **Fix (Backend)** | Add a public `/api/config` endpoint returning `{google_maps_api_key: ...}` |
-| **Fix (Frontend)** | Use `VITE_GOOGLE_MAPS_API_KEY` env var directly instead of fetching from backend |
+| **Status** | ✅ Implemented in `config.controller.js` + `config.routes.js` |
+| **Route** | `GET /api/config` (public) |
 
 ---
 
@@ -79,14 +73,12 @@
 
 ## Medium Priority Gaps
 
-### GAP-7: Logout does not call backend
+### ~~GAP-7: Logout does not call backend~~ ✅ RESOLVED
 
 | Item | Detail |
 |------|--------|
-| **Frontend behavior** | `logout()` only clears localStorage — no API call made |
-| **Backend endpoint** | `POST /api/auth/logout {accessToken, refreshToken}` exists and blacklists tokens |
-| **Impact** | Tokens remain valid on server even after frontend logout. Security risk |
-| **Fix** | Update `api.jsx :: logout()` to call `POST /api/auth/logout` before clearing storage |
+| **Status** | ✅ `api.jsx :: logout()` now calls `POST /api/auth/logout` with `{accessToken, refreshToken}` before clearing localStorage |
+| **Behavior** | Tokens are blacklisted server-side; `clearTokens()` always runs in `finally` block |
 
 ---
 
@@ -117,13 +109,13 @@
 
 | GAP | Feature | Severity | Fix Owner |
 |-----|---------|----------|-----------|
-| GAP-1 | Recommendations | 🔴 Critical | Backend |
-| GAP-2 | Save/Unsave destinations | 🔴 Critical | Backend |
-| GAP-3 | Google Maps config | 🟡 Medium | Backend or Frontend |
+| GAP-1 | Recommendations | ✅ Resolved | — |
+| GAP-2 | Save/Unsave destinations | ✅ Resolved | — |
+| GAP-3 | Google Maps config | ✅ Resolved | — |
 | GAP-4 | `id` vs `_id` | 🔴 Critical | Backend (transform) or Frontend |
 | GAP-5 | Survey field names | 🔴 Critical | Frontend |
 | GAP-6 | Landing trending data | 🔴 Critical | Frontend (1 line fix) |
-| GAP-7 | Logout blacklist | 🟡 Medium | Frontend |
+| GAP-7 | Logout blacklist | ✅ Resolved | — |
 | GAP-8 | Profile fields | 🟡 Medium | Both |
 | GAP-9 | Destination schema fields | 🔴 Critical | Backend |
 
@@ -135,8 +127,10 @@
 2. **GAP-5** — Transform survey payload before submit  
 3. **GAP-4** — Normalize `_id` → `id` in backend response or frontend reads  
 4. **GAP-9** — Add missing fields to destination schema  
-5. **GAP-7** — Call `POST /api/auth/logout` in frontend logout  
-6. **GAP-8** — Align profile response fields  
-7. **GAP-1** — Implement recommendation engine  
-8. **GAP-2** — Implement saved destinations feature  
-9. **GAP-3** — Pass Maps key directly from env var  
+5. **GAP-8** — Align profile response fields  
+
+### ✅ Already Fixed
+- **GAP-1** — Recommendations engine live (`recommendations.controller.js`)
+- **GAP-2** — Saved destinations implemented (`saved.controller.js`)
+- **GAP-3** — Config endpoint live (`config.controller.js`)
+- **GAP-7** — Frontend logout calls `POST /api/auth/logout`

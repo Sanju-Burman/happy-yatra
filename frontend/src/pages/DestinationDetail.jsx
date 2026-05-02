@@ -15,14 +15,14 @@ const DestinationDetail = () => {
   const [savingState, setSavingState] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMainData = async () => {
       try {
-        const [destData, savedData] = await Promise.all([
-          getDestination(id),
-          getSavedDestinations()
-        ]);
-        setDestination(destData.data);
-        setIsSaved(Array.isArray(savedData.data) && savedData.data.some(d => (d._id || d.id) === id));
+        const destData = await getDestination(id);
+        if (destData.success) {
+          setDestination(destData.data);
+        } else {
+          setDestination(destData); // Fallback for direct response
+        }
       } catch (error) {
         console.error('Error fetching destination:', error);
         toast.error('Failed to load destination details');
@@ -31,7 +31,20 @@ const DestinationDetail = () => {
       }
     };
 
-    fetchData();
+    const fetchSavedStatus = async () => {
+      try {
+        const savedData = await getSavedDestinations();
+        if (savedData && savedData.data) {
+          setIsSaved(Array.isArray(savedData.data) && savedData.data.some(d => (d._id?.toString() || d.id?.toString()) === id.toString()));
+        }
+      } catch (error) {
+        // Silently fail saved status fetch as it's non-critical for page load
+        console.debug('Error fetching saved status:', error);
+      }
+    };
+
+    fetchMainData();
+    fetchSavedStatus();
   }, [id]);
 
   const handleSaveToggle = async () => {
@@ -131,7 +144,9 @@ const DestinationDetail = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <h2 className="font-heading text-3xl font-bold text-foreground mb-4">About</h2>
-              <p className="text-muted-foreground text-lg leading-relaxed mb-8">{destination.description}</p>
+              <p className="text-muted-foreground text-lg leading-relaxed mb-8">
+                {destination.description || `Discover the breathtaking beauty and unique culture of ${destination.name}. Located in ${destination.location}, this destination offers a perfect blend of adventure and relaxation for every traveler.`}
+              </p>
 
               <h3 className="font-heading text-2xl font-bold text-secondary mb-4">Location</h3>
               <MapPlaceholder destinations={[destination]} />

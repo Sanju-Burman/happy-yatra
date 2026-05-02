@@ -14,21 +14,35 @@ This project solves the problem of overwhelming choices by offering smart, tailo
 
 ## 📂 Directory Structure
 ```
-my-destination-platform/
+happy-yatra/
 ├── backend/
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   ├── middleware/
-│   └── app.js
-├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── middlewares/
 │   │   ├── services/
-│   │   └── App.jsx
+│   │   ├── config/
+│   │   ├── utils/
+│   │   ├── app.js
+│   │   └── server.js
+│   ├── tests/
+│   │   ├── auth.test.js
+│   │   ├── saved-destinations.test.js
+│   │   ├── survey.test.js
+│   │   ├── setup.js
+│   │   └── globalSetup.js
+│   └── jest.config.js
+├── frontend/
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── hooks/
+│       ├── lib/
+│       ├── api.jsx
+│       └── App.jsx
+├── docs/
 ├── README.md
-├── package.json
 └── ...
 ```
 
@@ -39,17 +53,20 @@ my-destination-platform/
 > **(Attach 1-5 min video showing project structure, key components, auth flow, etc.)**
 
 ## 🚀 Features
-- 📝 Multi-step User Preference Survey (one-page, smooth flow) (Coming soon)
+- 📝 Multi-step User Preference Survey (one-page, smooth flow)
 - 🎯 Personalized Destination Recommendations
 - 🌍 Interactive Google Map with destination markers (Under Development)
 - 🛡️ JWT Authentication (Login, Signup, Refresh Token Rotation)
 - 📋 Profile Page showing saved destinations
-- ❤️ Save/unsave destinations feature (Under Development)
+- ❤️ Save/unsave destinations with persistent storage
 - 🔍 Lazy Loading for images and Paginated Destinations
 - 🎉 Animated Cards & Clean UI
 - 🔄 Reset form after submit + Redirect to Thank You page
 - 🌍 Trending Destinations Section
 - 📱 Fully Responsive Design
+- 🧪 Integration Test Suite (28 tests via Jest + Supertest)
+- 🔒 Input Validation on all API endpoints (express-validator)
+- 🚪 Secure Logout with server-side token blacklisting
 
 ## 🧐 Design Decisions & Assumptions
 - **One-page survey:** Simplifies user experience
@@ -93,8 +110,12 @@ POST /api/auth/login
 Body: { "email": "user@example.com", "password": "password123" }
 
 # Example Save Destination
-POST /api/profile/save
-Body: { "destinationId": "..." }
+POST /api/saved-destinations/:id
+Headers: { "Authorization": "Bearer <access_token>" }
+
+# Example Unsave Destination
+DELETE /api/saved-destinations/:id
+Headers: { "Authorization": "Bearer <access_token>" }
 ```
 
 > Include screenshots or short screen-recording gifs if possible.
@@ -117,12 +138,22 @@ Body: { "destinationId": "..." }
 
 ### User Profile
 - `GET /api/user/profile` — Get user profile detail
-- `POST /api/profile/save` — Save a destination
-- `POST /api/profile/unsave` — Unsave a destination
+
+### Saved Destinations
+- `GET /api/saved-destinations` — Get all saved destinations for the user
+- `POST /api/saved-destinations/:id` — Save a destination (requires valid ObjectId)
+- `DELETE /api/saved-destinations/:id` — Unsave a destination
 
 ### Destination Service
 - `GET /api/destinations` — Fetch all available destinations (paginated)
 - `GET /api/destinations/:id` — Get single destination details
+
+### Survey
+- `POST /api/survey` — Submit travel preferences
+- `GET /api/survey` — Get user's survey submissions
+
+### Recommendations
+- `POST /api/recommendations` — Get personalized destination recommendations
 
 ---
 
@@ -151,17 +182,19 @@ User                Frontend              Backend                  Database
 ---
 
 ## 📜 Token Handling Details
-- **Access Tokens** are valid for **1 day** and used for regular authenticated requests.
+- **Access Tokens** are valid for **3 hours** and used for regular authenticated requests.
 - **Refresh Tokens** are valid for **7 days**, allowing renewal of Access Tokens without forcing users to log in repeatedly.
 - Backend implements **Refresh Token Rotation**; old refresh tokens are blacklisted upon renewal.
-- Logout flow blacklists both tokens, invalidating user sessions properly.
+- Logout flow **calls the backend** to blacklist both tokens server-side, then clears local storage.
+- The frontend interceptor automatically refreshes expired access tokens using the refresh token.
 
 ---
 
 ## 🛠 Technology Stack
-- **Frontend:** React.js, React Router, Axios, CSS
-- **Backend:** Node.js, Express.js
+- **Frontend:** React.js, React Router, Axios, Framer Motion, Lucide Icons, Sonner (Toast)
+- **Backend:** Node.js, Express.js, express-validator, Helmet, express-rate-limit
 - **Database:** MongoDB Atlas (Mongoose ODM)
-- **Authentication:** JWT (Access Token + Refresh Token)
-- **Others:** Google Maps API, React-Toastify, Framer Motion, React-Paginate
+- **Authentication:** JWT (Access Token + Refresh Token with Rotation)
+- **Testing:** Jest, Supertest (28 integration tests)
+- **Others:** Google Maps API, React Lazy Loading
 

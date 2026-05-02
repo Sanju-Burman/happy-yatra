@@ -53,8 +53,29 @@ const ensureDBConnection = async (req, res, next) => {
 // Middlewares
 app.use(helmet());
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
+
+// Express 5 Compatibility Middleware for mongo-sanitize
+app.use((req, res, next) => {
+    if (req.query) {
+        Object.defineProperty(req, 'query', {
+            value: { ...req.query },
+            writable: true,
+            configurable: true,
+            enumerable: true
+        });
+    }
+    if (req.params) {
+        Object.defineProperty(req, 'params', {
+            value: { ...req.params },
+            writable: true,
+            configurable: true,
+            enumerable: true
+        });
+    }
+    next();
+});
 
 // Sanitize data
 app.use(mongoSanitize());

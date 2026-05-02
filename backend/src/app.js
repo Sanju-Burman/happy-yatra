@@ -12,6 +12,7 @@ const destinationRoutes = require('./routes/destinations.routes');
 const personalizedRecomRoutes = require('./routes/recommendations.routes');
 const savedDestinationsRoutes = require('./routes/saved-destinations.routes');
 const configRoutes = require('./routes/config.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const connectDB = require('./config/db');
 
@@ -79,6 +80,7 @@ app.use('/api/destinations', destinationRoutes);
 app.use('/api/recommendations', personalizedRecomRoutes);
 app.use('/api/saved-destinations', savedDestinationsRoutes);
 app.use('/api/config', configRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);

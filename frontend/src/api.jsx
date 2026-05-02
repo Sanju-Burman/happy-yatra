@@ -209,3 +209,48 @@ export const getConfig = async () => {
   const response = await axios.get(`${API}/config`);
   return response.data;
 };
+
+// ─── ADMIN API ────────────────────────────────────────────────
+
+// Destinations
+export const adminGetDestinations = async (page = 1, limit = 20) => {
+  const response = await axios.get(`${API}/admin/destinations`, { params: { page, limit } });
+  return response.data;
+};
+
+export const adminCreateDestination = async (data) => {
+  const response = await axios.post(`${API}/admin/destinations`, data);
+  return response.data;
+};
+
+export const adminUpdateDestination = async (id, data) => {
+  const response = await axios.put(`${API}/admin/destinations/${id}`, data);
+  return response.data;
+};
+
+export const adminDeleteDestination = async (id) => {
+  const response = await axios.delete(`${API}/admin/destinations/${id}`);
+  return response.data;
+};
+
+export const adminToggleTrending = async (id) => {
+  const response = await axios.patch(`${API}/admin/destinations/${id}/trending`);
+  return response.data;
+};
+
+// Users
+export const adminGetUsers = async (page = 1, limit = 20) => {
+  const response = await axios.get(`${API}/admin/users`, { params: { page, limit } });
+  return response.data;
+};
+
+export const adminGetUserSurvey = async (userId) => {
+  const response = await axios.get(`${API}/admin/users/${userId}/survey`);
+  return response.data;
+};
+
+// Analytics
+export const adminGetAnalytics = async () => {
+  const response = await axios.get(`${API}/admin/analytics`);
+  return response.data;
+};

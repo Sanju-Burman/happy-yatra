@@ -41,7 +41,11 @@ const getDestinationById = async (req, res, next) => {
             return next(new ErrorResponse('Invalid destination id format', 400));
         }
 
-        const destination = await Destination.findById(req.params.id).lean();
+        const destination = await Destination.findByIdAndUpdate(
+            req.params.id,
+            { $inc: { viewCount: 1 } },
+            { new: true }
+        ).lean();
         if (!destination) {
             return next(new ErrorResponse('Destination not found', 404));
         }

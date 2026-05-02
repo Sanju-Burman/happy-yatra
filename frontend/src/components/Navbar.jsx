@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Compass, User, LogOut, Sun, Moon, Menu, X } from 'lucide-react';
+import { Compass, User, LogOut, Sun, Moon, Menu, X, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logout } from '@/api.jsx';
 import { toast } from 'sonner';
@@ -32,6 +32,13 @@ const Navbar = ({ user, setUser }) => {
         {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         <span className="md:hidden">Toggle Theme</span>
       </button>
+
+      {user?.role === 'admin' && (
+        <Link to="/admin" onClick={onClick} className="font-semibold text-amber-500 hover:text-amber-600 transition-colors text-center md:text-left flex items-center justify-center md:justify-start gap-2">
+          <Shield className="w-4 h-4" />
+          Admin
+        </Link>
+      )}
 
       {user ? (
         <>

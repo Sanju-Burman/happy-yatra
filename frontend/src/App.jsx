@@ -13,6 +13,11 @@ const DestinationDetail = React.lazy(() => import('@/pages/DestinationDetail.jsx
 const Profile = React.lazy(() => import('@/pages/Profile.jsx'));
 const ThankYou = React.lazy(() => import('@/pages/ThankYou.jsx'));
 
+const AdminDashboard = React.lazy(() => import('@/pages/admin/AdminDashboard'));
+const AdminDestinations = React.lazy(() => import('@/pages/admin/AdminDestinations'));
+const AdminUsers = React.lazy(() => import('@/pages/admin/AdminUsers'));
+const AdminAnalytics = React.lazy(() => import('@/pages/admin/AdminAnalytics'));
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +42,13 @@ function App() {
     return !user ? children : <Navigate to="/" />;
   };
 
+  const AdminRoute = ({ user, children }) => {
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user) return <Navigate to="/login" replace />;
+    if (user.role !== 'admin') return <Navigate to="/" replace />;
+    return children;
+  };
+
   return (
     <div className="App relative min-h-screen bg-background text-foreground transition-colors duration-300 z-[1]">
       <BrowserRouter>
@@ -51,6 +63,14 @@ function App() {
             <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
             <Route path="/destination/:id" element={<ProtectedRoute><DestinationDetail /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminRoute user={user}><AdminDashboard setUser={setUser} /></AdminRoute>}>
+              <Route index element={<AdminAnalytics />} />
+              <Route path="destinations" element={<AdminDestinations />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
+            </Route>
           </Routes>
         </React.Suspense>
         <Toaster position="top-right" />

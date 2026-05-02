@@ -43,7 +43,8 @@ backend/
     │   ├── survey.controller.js # submitSurvey, getSurvey
     │   ├── destinations.controller.js # getDestinations (paginated), getDestinationById
     │   ├── recommendations.controller.js # getRecommendations (personalized based on survey)
-    │   └── saved.controller.js  # save, unsave, getSavedDestinations
+    │   ├── saved.controller.js  # save, unsave, getSavedDestinations
+    │   └── admin.controller.js  # Admin CRUD & Analytics
     └── routes/
         ├── auth.routes.js       # /api/auth/*
         ├── user.routes.js       # /api/user/*
@@ -51,7 +52,8 @@ backend/
         ├── destinations.routes.js     # /api/destinations/*
         ├── recommendations.routes.js  # /api/recommendations/*
         ├── saved-destinations.routes.js # /api/saved-destinations/*
-        └── config.routes.js     # /api/config/*
+        ├── config.routes.js     # /api/config/*
+        └── admin.routes.js      # /api/admin/*
 ```
 
 ---
@@ -65,7 +67,8 @@ backend/
 
 ### Destination (`destinations` collection)
 ```js
-{ name, imageUrl, averageCost(Number), styles[String], tags[String], activities[String], location, latitude, longitude, createdAt, updatedAt }
+{ name, imageUrl, averageCost(Number), styles[String], tags[String], activities[String], location, latitude, longitude, trending(Boolean), viewCount(Number), createdAt, updatedAt }
+// viewCount is incremented atomically on GET /:id
 ```
 
 ### Survey (`Survey` collection)
@@ -120,6 +123,18 @@ backend/
 | GET | `/` | ✅ Bearer | — | Saved destinations for user |
 | POST | `/:id` | ✅ Bearer | — | Save a destination |
 | DELETE | `/:id` | ✅ Bearer | — | Unsave a destination |
+
+### Admin — `/api/admin` (Requires `admin` role)
+| Method | Path | Auth | Response |
+|--------|------|------|----------|
+| GET | `/analytics` | ✅ Admin | Platform statistics & charts |
+| GET | `/destinations` | ✅ Admin | Paginated list with trending info |
+| POST | `/destinations` | ✅ Admin | Create new destination |
+| PUT | `/destinations/:id` | ✅ Admin | Update destination (excludes viewCount) |
+| DELETE| `/destinations/:id` | ✅ Admin | Delete destination |
+| PATCH | `/destinations/:id/trending` | ✅ Admin | Toggle trending status |
+| GET | `/users` | ✅ Admin | Paginated user list |
+| GET | `/users/:id/survey` | ✅ Admin | User-specific survey results |
 
 ---
 
@@ -207,7 +222,7 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 2. **Refresh token is rotated** on refresh — new tokens are returned and old are blacklisted.
 3. **Survey is authenticated** — `POST /api/survey` and `GET /api/survey` BOTH require JWT. User ObjectId is derived from token `sub`, NOT from request body.
 4. **Access token expiry: 3 hours**, Refresh token expiry: **7 days**.
-5. **Admin role exists** in User model and `adminChecks` middleware exists, but NO admin-protected routes are currently wired.
+5. **Admin role exists** in User model and `adminChecks` middleware exists. Admin-protected routes are mounted at `/api/admin`.
 7. **`trending` field** is defined and fully queried correctly in MongoDB.
 8. **CORS**: When `CORS_ORIGIN=*`, `credentials` is set to `false`. When restricted, credentials are allowed.
 9. **Vercel** routes all traffic to `src/app.js` (not `server.js`).

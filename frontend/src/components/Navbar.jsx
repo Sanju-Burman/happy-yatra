@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { logout } from '@/api.jsx';
 import { toast } from 'sonner';
 import { useTheme } from '@/components/theme-provider.jsx';
+import ActionButton from '@/components/ActionButton.jsx';
 
 const Navbar = ({ user, setUser }) => {
+  const MotionDiv = motion.div;
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -56,7 +58,7 @@ const Navbar = ({ user, setUser }) => {
       ) : (
         <>
           <Link onClick={onClick} to="/login" className="font-medium text-muted-foreground hover:text-primary transition-colors text-center md:text-left" data-testid="nav-login-link">Login</Link>
-          <Link onClick={onClick} to="/signup" className="bg-primary text-primary-foreground rounded-full px-6 py-2 hover:opacity-90 transition-all duration-300 shadow-md hover:shadow-lg font-medium text-center md:text-left mx-auto md:mx-0 inline-block w-fit" data-testid="nav-signup-button">Get Started</Link>
+          <ActionButton onClick={onClick} to="/signup" size="sm" className="mx-auto w-fit md:mx-0" data-testid="nav-signup-button">Get Started</ActionButton>
         </>
       )}
     </>
@@ -92,7 +94,7 @@ const Navbar = ({ user, setUser }) => {
       {/* Mobile Nav Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -101,7 +103,7 @@ const Navbar = ({ user, setUser }) => {
             <div className="flex flex-col gap-6 py-6 px-6 shadow-inner">
               <NavLinks onClick={() => setIsMobileMenuOpen(false)} />
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
       </AnimatePresence>
     </nav>

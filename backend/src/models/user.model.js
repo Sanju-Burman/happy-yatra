@@ -9,6 +9,13 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'admin'],
         default: 'user'
     },
+    bio: { type: String },
+    location: { type: String },
+    profilePicture: { type: String },
+    profilePicture_public_id: { type: String },
+    coverImage: { type: String },
+    coverImage_public_id: { type: String },
+    socialLinks: { type: Object },
     savedDestinations: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'destinations'

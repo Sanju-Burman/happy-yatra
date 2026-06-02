@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const apiBase = import.meta.env.VITE_Backend_API || 'http://localhost:9000/api';
+// Use relative path for dev (via Vite proxy), full URL for production
+const apiBase = import.meta.env.VITE_Backend_API || (import.meta.env.DEV ? '/api' : 'http://localhost:9000/api');
 const API = apiBase.replace(/\/+$/, '');
 
 export const setAuthToken = (token) => {

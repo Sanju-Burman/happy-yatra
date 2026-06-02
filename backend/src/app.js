@@ -32,9 +32,10 @@ const corsOptions = {
         }
         return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: !allowAllOrigins
+    credentials: true,
+    maxAge: 86400 // 24 hours
 };
 
 // Database Connection Middleware

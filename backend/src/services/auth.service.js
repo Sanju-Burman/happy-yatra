@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const TokenBlacklist = require('../models/tokenBlocking.model');
 const ErrorResponse = require('../utils/ErrorResponse');
+const { setBlacklistedToken, isBlacklistedToken } = require('../lib/cache');
 
 const login = async (email, password) => {
     const user = await User.findOne({ email }).select('+password');
@@ -54,7 +55,7 @@ const refresh = async (refreshToken) => {
         throw new ErrorResponse('Refresh Token required', 400);
     }
 
-    const blacklisted = await TokenBlacklist.findOne({ token: refreshToken });
+    const blacklisted = isBlacklistedToken(refreshToken) || await TokenBlacklist.findOne({ token: refreshToken });
     if (blacklisted) {
         throw new ErrorResponse('Invalid token', 401);
     }
@@ -67,6 +68,7 @@ const refresh = async (refreshToken) => {
             type: 'refresh',
             expiresAt: new Date(decoded.exp * 1000)
         });
+        setBlacklistedToken(refreshToken, decoded.exp - Math.floor(Date.now() / 1000));
 
         const newAccessToken = jwt.sign(
             { sub: decoded.sub, role: decoded.role },
@@ -99,6 +101,7 @@ const blacklistTokens = async (accessToken, refreshToken) => {
                 type: 'access',
                 expiresAt: new Date(decodedAccess.exp * 1000)
             });
+            setBlacklistedToken(accessToken, decodedAccess.exp - Math.floor(Date.now() / 1000));
         }
         
         if (decodedRefresh && decodedRefresh.exp) {
@@ -107,6 +110,7 @@ const blacklistTokens = async (accessToken, refreshToken) => {
                 type: 'refresh',
                 expiresAt: new Date(decodedRefresh.exp * 1000)
             });
+            setBlacklistedToken(refreshToken, decodedRefresh.exp - Math.floor(Date.now() / 1000));
         }
         
         if (tokensToBlacklist.length > 0) {

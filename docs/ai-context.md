@@ -115,7 +115,7 @@ backend/
 ### Recommendations — `/api/recommendations`
 | Method | Path | Auth | Body | Response |
 |--------|------|------|------|----------|
-| POST | `/` | ✅ Bearer | — | `{success, count, data: Destination[]}` |
+| GET | `/` | ✅ Bearer | — | `{success, count, data: Destination[]}` |
 
 ### Saved Destinations — `/api/saved-destinations`
 | Method | Path | Auth | Body | Response |

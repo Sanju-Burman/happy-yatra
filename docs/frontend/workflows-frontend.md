@@ -163,9 +163,8 @@ Survey.jsx
 Recommendations.jsx mounts
     │
     ├── useEffect → getRecommendations()
-    │       POST /api/recommendations
-    │       ⚠️ CRITICAL: /recommendations does NOT exist on backend
-    │       → Will always fail with error
+    │       GET /api/recommendations
+    │       → Returns personalized recommendations when survey data exists
     │
     ├── On error.response.status === 400:
     │       setError('Please complete the survey first...')

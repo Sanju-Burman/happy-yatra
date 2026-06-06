@@ -11,7 +11,7 @@
 | Item | Detail |
 |------|--------|
 | **Status** | ✅ Implemented in `recommendations.controller.js` + `recommendations.routes.js` |
-| **Route** | `POST /api/recommendations` (requires `verifyToken`) |
+| **Route** | `GET /api/recommendations` (requires `verifyToken`) |
 | **Behavior** | Fetches user's survey, builds personalized query, returns matched destinations |
 
 ---

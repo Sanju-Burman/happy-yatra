@@ -123,7 +123,7 @@ frontend/
 ### `src/pages/Recommendations.jsx`
 - **Role**: Display personalized destination suggestions.
 - **Responsibility**:
-  - Fetches via `getRecommendations()` → `POST /recommendations` ⚠️ (endpoint missing from backend).
+  - Fetches via `getRecommendations()` → `GET /recommendations`.
   - Shows: loading spinner, error state with "Take Survey" CTA, or destination grid + map.
   - Uses `DestinationCard` (with `showSaveButton=true`) and `MapPlaceholder`.
 

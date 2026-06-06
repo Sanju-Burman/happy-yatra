@@ -52,7 +52,7 @@ DELETE /api/saved-destinations/:id  [AUTH] Unsave a destination
 POST   /api/survey               [AUTH] Submit travel preferences
 GET    /api/survey               [AUTH] Get user's survey submissions
 
-POST   /api/recommendations     [AUTH] Get personalized recommendations
+GET    /api/recommendations     [AUTH] Get personalized recommendations
 ```
 
 ### Environment Variables (`.env` in `backend/`)

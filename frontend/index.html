@@ -1,84 +1,112 @@
 <!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-    rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/happy_yatra_black_circle.ico"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Happy Yatraa - AI Powered Travel Recommendations</title>
-    <meta name="description" content="Discover your perfect destination with Happy Yatraa. Personalised travel recommendations powered by AI. Tell us your preferences, and we'll guide you to unforgettable places." />
-    
+    <meta
+      name="description"
+      content="Discover your perfect destination with Happy Yatraa. Personalised travel recommendations powered by AI. Tell us your preferences, and we'll guide you to unforgettable places."
+    />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://happyyatra.netlify.app/" />
-    <meta property="og:title" content="Happy Yatraa - AI Powered Travel Recommendations" />
-    <meta property="og:description" content="Discover your perfect destination with personalised AI travel guide." />
-    <meta property="og:image" content="https://happyyatra.netlify.app/logo.png" />
+    <meta
+      property="og:title"
+      content="Happy Yatraa - AI Powered Travel Recommendations"
+    />
+    <meta
+      property="og:description"
+      content="Discover your perfect destination with personalised AI travel guide."
+    />
+    <meta
+      property="og:image"
+      content="https://happyyatra.netlify.app/logo.png"
+    />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://happyyatra.netlify.app/" />
-    <meta property="twitter:title" content="Happy Yatraa - AI Powered Travel Recommendations" />
-    <meta property="twitter:description" content="Discover your perfect destination with personalised AI travel guide." />
-    <meta property="twitter:image" content="https://happyyatra.netlify.app/logo.png" />
+    <meta
+      property="twitter:title"
+      content="Happy Yatraa - AI Powered Travel Recommendations"
+    />
+    <meta
+      property="twitter:description"
+      content="Discover your perfect destination with personalised AI travel guide."
+    />
+    <meta
+      property="twitter:image"
+      content="https://happyyatra.netlify.app/logo.png"
+    />
 
     <!-- Structured Data -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Happy Yatraa",
-      "url": "https://happyyatra.netlify.app/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://happyyatra.netlify.app/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Happy Yatraa",
+        "url": "https://happyyatra.netlify.app/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://happyyatra.netlify.app/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
       }
-    }
     </script>
-  <style>
-    :root {
-      --background: 0 0% 100%;
-      --foreground: 0 0% 3.9%;
-    }
+    <style>
+      :root {
+        --background: 0 0% 100%;
+        --foreground: 0 0% 3.9%;
+      }
 
-    .dark {
-      --background: 0 0% 3.9%;
-      --foreground: 0 0% 98%;
-    }
+      .dark {
+        --background: 0 0% 3.9%;
+        --foreground: 0 0% 98%;
+      }
 
-    body {
-      background-color: hsl(var(--background));
-      color: hsl(var(--foreground));
-      font-family: 'DM Sans', sans-serif;
-      margin: 0;
-    }
+      body {
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+        font-family: "DM Sans", sans-serif;
+        margin: 0;
+      }
 
-    .hero-video-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-    }
+      .hero-video-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
 
-    .hero-content {
-      position: relative;
-      z-index: 10;
-      padding: 5rem 1.5rem;
-    }
-  </style>
-  <link rel="preload" as="image"
-    href="https://images.unsplash.com/photo-1732808460864-b8e5eb489a52?auto=format,compress&q=80&w=1200&fm=webp"
-    width="1200" height="800">
-</head>
+      .hero-content {
+        position: relative;
+        z-index: 10;
+        padding: 5rem 1.5rem;
+      }
+    </style>
+    <link
+      rel="preload"
+      as="image"
+      href="https://images.unsplash.com/photo-1732808460864-b8e5eb489a52?auto=format,compress&q=80&w=1200&fm=webp"
+      width="1200"
+      height="800"
+    />
+  </head>
 
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

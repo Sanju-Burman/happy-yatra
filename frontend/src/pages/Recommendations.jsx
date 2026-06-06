@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getRecommendations } from '@/api.jsx';
 import { toast } from 'sonner';
 import { Sparkles, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import DestinationCard from '@/components/DestinationCard.jsx';
 import MapPlaceholder from '@/components/MapPlaceholder.jsx';
+import ActionButton from '@/components/ActionButton.jsx';
 
 const Recommendations = () => {
+  const MotionDiv = motion.div;
+  const navigate = useNavigate();
   const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,18 +23,20 @@ const Recommendations = () => {
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         if (error.response?.status === 400) {
-          setError('Please complete the survey first to get recommendations.');
+          toast.error('Please complete the survey first to get recommendations.');
+          navigate('/survey', { replace: true });
+          return;
         } else {
           setError('Failed to load recommendations. Please try again.');
+          toast.error(error.response?.data?.detail || 'Failed to load recommendations');
         }
-        toast.error(error.response?.data?.detail || 'Failed to load recommendations');
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecommendations();
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -48,12 +54,9 @@ const Recommendations = () => {
       <div data-testid="recommendations-error" className="min-h-screen flex items-center justify-center px-6">
         <div className="max-w-md text-center">
           <p className="text-muted-foreground mb-6">{error}</p>
-          <a
-            href="/survey"
-            className="bg-primary text-white rounded-full px-8 py-3 hover:bg-[#A04B32] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 font-medium inline-block"
-          >
+          <ActionButton to="/survey">
             Take Survey
-          </a>
+          </ActionButton>
         </div>
       </div>
     );
@@ -62,7 +65,7 @@ const Recommendations = () => {
   return (
     <div data-testid="recommendations-page" className="min-h-screen px-6 md:px-12 lg:px-24 py-20">
       <div className="max-w-7xl mx-auto">
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -78,10 +81,10 @@ const Recommendations = () => {
           <p className="text-muted-foreground text-lg max-w-2xl">
             Based on your preferences, we've curated these perfect destinations for your next adventure.
           </p>
-        </motion.div>
+        </MotionDiv>
 
         {/* Map Section */}
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -92,7 +95,7 @@ const Recommendations = () => {
             <h2 className="font-heading text-2xl font-semibold text-foreground">Map View</h2>
           </div>
           <MapPlaceholder destinations={destinations} />
-        </motion.div>
+        </MotionDiv>
 
         {/* Destinations Grid */}
         <div className="mb-8">
@@ -102,14 +105,14 @@ const Recommendations = () => {
           ) : (
             <div data-testid="recommendations-grid" className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {destinations?.length > 0 && destinations.map((destination, idx) => (
-                <motion.div
+                <MotionDiv
                   key={destination._id || destination.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: idx * 0.1 }}
                 >
                   <DestinationCard destination={destination} showSaveButton={true} />
-                </motion.div>
+                </MotionDiv>
               ))}
             </div>
           )}

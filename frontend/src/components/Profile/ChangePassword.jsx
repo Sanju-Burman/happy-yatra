@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { KeyRound, ShieldAlert, Save } from "lucide-react";
+import { KeyRound, ShieldAlert, Save, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { changePassword } from "@/api.jsx";
@@ -10,6 +10,9 @@ const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
@@ -70,15 +73,28 @@ const ChangePassword = () => {
             >
               Current Password
             </label>
-            <input
-              id="old-password"
-              type="password"
-              value={oldPassword}
-              onChange={(event) => setOldPassword(event.target.value)}
-              required
-              className="mt-2 w-full rounded-full border border-border bg-background/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
-              placeholder="••••••••"
-            />
+            <div className="relative mt-2">
+              <input
+                id="old-password"
+                type={showOldPassword ? "text" : "password"}
+                value={oldPassword}
+                onChange={(event) => setOldPassword(event.target.value)}
+                required
+                className="w-full rounded-full border border-border bg-background/80 pl-4 pr-12 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowOldPassword(!showOldPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showOldPassword ? (
+                  <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+                ) : (
+                  <Eye className="w-4 h-4" strokeWidth={1.5} />
+                )}
+              </button>
+            </div>
           </div>
 
           <div>
@@ -88,16 +104,29 @@ const ChangePassword = () => {
             >
               New Password
             </label>
-            <input
-              id="new-password"
-              type="password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              required
-              minLength={6}
-              className="mt-2 w-full rounded-full border border-border bg-background/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
-              placeholder="••••••••"
-            />
+            <div className="relative mt-2">
+              <input
+                id="new-password"
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                required
+                minLength={6}
+                className="w-full rounded-full border border-border bg-background/80 pl-4 pr-12 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showNewPassword ? (
+                  <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+                ) : (
+                  <Eye className="w-4 h-4" strokeWidth={1.5} />
+                )}
+              </button>
+            </div>
           </div>
 
           <div>
@@ -107,15 +136,28 @@ const ChangePassword = () => {
             >
               Confirm New Password
             </label>
-            <input
-              id="confirm-new-password"
-              type="password"
-              value={confirmNewPassword}
-              onChange={(event) => setConfirmNewPassword(event.target.value)}
-              required
-              className="mt-2 w-full rounded-full border border-border bg-background/80 px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
-              placeholder="••••••••"
-            />
+            <div className="relative mt-2">
+              <input
+                id="confirm-new-password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmNewPassword}
+                onChange={(event) => setConfirmNewPassword(event.target.value)}
+                required
+                className="w-full rounded-full border border-border bg-background/80 pl-4 pr-12 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+                ) : (
+                  <Eye className="w-4 h-4" strokeWidth={1.5} />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

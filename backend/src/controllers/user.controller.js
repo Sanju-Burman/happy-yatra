@@ -2,6 +2,7 @@ const User = require('../models/user.model');
 const Survey = require('../models/surveyData.model');
 const ErrorResponse = require('../utils/ErrorResponse');
 const { destroy } = require('../utils/cloudinary');
+const userService = require('../services/user.service');
 
 const profileDetails = async (req, res, next) => {
     try {
@@ -140,4 +141,14 @@ const updateImages = async (req, res, next) => {
     }
 }
 
-module.exports = { profileDetails, getProfileById, updateProfile, updatePreferences, updateImages };
+const changePassword = async (req, res, next) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        await userService.changePassword(req.user.id, oldPassword, newPassword);
+        res.status(200).json({ success: true, message: 'Password updated successfully' });
+    } catch (e) {
+        next(e);
+    }
+};
+
+module.exports = { profileDetails, getProfileById, updateProfile, updatePreferences, updateImages, changePassword };

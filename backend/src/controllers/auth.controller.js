@@ -64,4 +64,30 @@ const refresh = async (req, res, next) => {
   }
 };
 
-module.exports = { login, signup, refresh, logout };
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.forgotPassword(email);
+    res.status(200).json({
+      success: true,
+      message: 'Password reset link sent to your email'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    await authService.resetPassword(token, password);
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { login, signup, refresh, logout, forgotPassword, resetPassword };

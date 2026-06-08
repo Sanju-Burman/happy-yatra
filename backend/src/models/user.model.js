@@ -55,7 +55,9 @@ const userSchema = new mongoose.Schema({
     savedDestinations: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'destinations'
-    }]
+    }],
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Users', userSchema);

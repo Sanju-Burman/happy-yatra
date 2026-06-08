@@ -103,6 +103,15 @@ const Login = ({ setUser }) => {
                   )}
                 </button>
               </div>
+              <div className="flex justify-end mt-2">
+                <Link
+                  to="/forgot-password"
+                  data-testid="login-forgot-password-link"
+                  className="text-xs text-primary hover:opacity-80 font-medium transition-all"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <ActionButton

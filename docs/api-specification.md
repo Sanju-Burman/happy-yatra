@@ -521,7 +521,7 @@ Remove a destination from the user's saved list.
 
 ---
 
-### POST `/api/recommendations`
+### GET `/api/recommendations`
 
 Get personalized destination recommendations based on the user's latest survey data.
 

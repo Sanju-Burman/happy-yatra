@@ -153,7 +153,7 @@ Headers: { "Authorization": "Bearer <access_token>" }
 - `GET /api/survey` — Get user's survey submissions
 
 ### Recommendations
-- `POST /api/recommendations` — Get personalized destination recommendations
+- `GET /api/recommendations` — Get personalized destination recommendations
 
 ---
 
@@ -197,4 +197,3 @@ User                Frontend              Backend                  Database
 - **Authentication:** JWT (Access Token + Refresh Token with Rotation)
 - **Testing:** Jest, Supertest (28 integration tests)
 - **Others:** Google Maps API, React Lazy Loading
-

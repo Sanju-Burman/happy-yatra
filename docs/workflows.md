@@ -326,7 +326,7 @@ tokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 ## 7. Data Flow: Recommendation Engine
 
 ### Current State (Live — `recommendations.controller.js`)
-- Route: `POST /api/recommendations` (requires `verifyToken`)
+- Route: `GET /api/recommendations` (requires `verifyToken`)
 - Fetches the user's latest `Survey` document (sorted by `createdAt` desc)
 - Builds a MongoDB `$or` query matching `styles` ∋ `travelStyle` OR `tags` ∩ `interests`
 - Applies budget filtering: budget levels 1–3 map to cost limits ($2k / $5k / $10k); level 4 (luxury) has no cap
@@ -334,7 +334,7 @@ tokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 - Returns `{success, count, data: Destination[]}`
 
 ```
-POST /api/recommendations
+GET /api/recommendations
   Authorization: Bearer <token>
          │
          ▼

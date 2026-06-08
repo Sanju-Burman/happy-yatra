@@ -24,6 +24,7 @@ router.post('/login',
 );
 
 router.post('/logout',
+  verifyToken,
   body('accessToken').notEmpty(),
   body('refreshToken').notEmpty(),
   handleValidation,

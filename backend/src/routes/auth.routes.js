@@ -1,5 +1,5 @@
 const express = require('express');
-const { login, signup, refresh, logout } = require('../controllers/auth.controller');
+const { login, signup, refresh, logout, forgotPassword, resetPassword } = require('../controllers/auth.controller');
 const { verifyToken } = require('../middlewares/Auth.middleware');
 const { body, validationResult } = require('express-validator');
 
@@ -48,5 +48,18 @@ router.post('/refresh',
 router.post('/data',verifyToken, (req, res) => {
     res.json("protected page running");
 });
+
+router.post('/forgot-password',
+  body('email').isEmail().normalizeEmail(),
+  handleValidation,
+  forgotPassword
+);
+
+router.post('/reset-password',
+  body('token').notEmpty(),
+  body('password').isLength({ min: 6 }),
+  handleValidation,
+  resetPassword
+);
 
 module.exports = router;

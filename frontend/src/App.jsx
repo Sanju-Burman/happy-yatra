@@ -7,6 +7,8 @@ import Landing from '@/pages/Landing.jsx';
 
 const Login = React.lazy(() => import('@/pages/Login.jsx'));
 const Signup = React.lazy(() => import('@/pages/Signup.jsx'));
+const ForgotPassword = React.lazy(() => import('@/pages/ForgotPassword.jsx'));
+const ResetPassword = React.lazy(() => import('@/pages/ResetPassword.jsx'));
 const Survey = React.lazy(() => import('@/pages/Survey.jsx'));
 const Recommendations = React.lazy(() => import('@/pages/Recommendations.jsx'));
 const DestinationDetail = React.lazy(() => import('@/pages/DestinationDetail.jsx'));
@@ -58,6 +60,8 @@ function App() {
             <Route path="/" element={<Landing user={user} />} />
             <Route path="/login" element={<PublicRoute><Login setUser={setUser} /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><Signup setUser={setUser} /></PublicRoute>} />
+            <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+            <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
             <Route path="/survey" element={<ProtectedRoute><Survey /></ProtectedRoute>} />
             <Route path="/thank-you" element={<ProtectedRoute><ThankYou /></ProtectedRoute>} />
             <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />

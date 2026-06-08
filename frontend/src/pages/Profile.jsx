@@ -7,6 +7,7 @@ import DestinationCard from '@/components/DestinationCard.jsx';
 import ProfileHeader from '@/components/Profile/ProfileHeader.jsx';
 import TravelStats from '@/components/Profile/TravelStats.jsx';
 import ProfileSettings from '@/components/Profile/ProfileSettings.jsx';
+import ChangePassword from '@/components/Profile/ChangePassword.jsx';
 
 const Profile = () => {
   const MotionDiv = motion.div;
@@ -77,6 +78,8 @@ const Profile = () => {
           onProfileUpdate={setProfile}
           budgetLabels={budgetLabels}
         />
+
+        <ChangePassword />
 
         {/* Saved Destinations */}
         <MotionDiv

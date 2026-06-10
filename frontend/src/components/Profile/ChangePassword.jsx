@@ -64,7 +64,7 @@ const ChangePassword = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <label
@@ -80,6 +80,7 @@ const ChangePassword = () => {
                 value={oldPassword}
                 onChange={(event) => setOldPassword(event.target.value)}
                 required
+                autoComplete="new-password"
                 className="w-full rounded-full border border-border bg-background/80 pl-4 pr-12 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="••••••••"
               />
@@ -112,6 +113,7 @@ const ChangePassword = () => {
                 onChange={(event) => setNewPassword(event.target.value)}
                 required
                 minLength={6}
+                autoComplete="new-password"
                 className="w-full rounded-full border border-border bg-background/80 pl-4 pr-12 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="••••••••"
               />
@@ -143,6 +145,7 @@ const ChangePassword = () => {
                 value={confirmNewPassword}
                 onChange={(event) => setConfirmNewPassword(event.target.value)}
                 required
+                autoComplete="new-password"
                 className="w-full rounded-full border border-border bg-background/80 pl-4 pr-12 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="••••••••"
               />

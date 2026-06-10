@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getRecommendations } from '@/api.jsx';
+import { getRecommendations, getSavedDestinations } from '@/api.jsx';
 import { toast } from 'sonner';
 import { Sparkles, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -12,14 +12,22 @@ const Recommendations = () => {
   const MotionDiv = motion.div;
   const navigate = useNavigate();
   const [destinations, setDestinations] = useState([]);
+  const [savedIds, setSavedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const data = await getRecommendations();
+        const [data, savedData] = await Promise.all([
+          getRecommendations(),
+          getSavedDestinations().catch(() => ({ data: [] }))
+        ]);
         setDestinations(data.data || []);
+        const ids = new Set(
+          (Array.isArray(savedData?.data) ? savedData.data : []).map(d => d._id || d.id)
+        );
+        setSavedIds(ids);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         if (error.response?.status === 400) {
@@ -28,7 +36,7 @@ const Recommendations = () => {
           return;
         } else {
           setError('Failed to load recommendations. Please try again.');
-          toast.error(error.response?.data?.detail || 'Failed to load recommendations');
+          toast.error(error.response?.data?.message || 'Failed to load recommendations');
         }
       } finally {
         setLoading(false);
@@ -111,7 +119,11 @@ const Recommendations = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: idx * 0.1 }}
                 >
-                  <DestinationCard destination={destination} showSaveButton={true} />
+                  <DestinationCard
+                    destination={destination}
+                    showSaveButton={true}
+                    isSaved={savedIds.has(destination._id || destination.id)}
+                  />
                 </MotionDiv>
               ))}
             </div>

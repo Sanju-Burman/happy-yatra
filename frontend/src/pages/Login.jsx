@@ -24,7 +24,7 @@ const Login = ({ setUser }) => {
       toast.success("Login successful!");
       navigate("/");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Login failed");
+      toast.error(error.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }

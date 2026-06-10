@@ -223,10 +223,20 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 3. **Survey is authenticated** — `POST /api/survey` and `GET /api/survey` BOTH require JWT. User ObjectId is derived from token `sub`, NOT from request body.
 4. **Access token expiry: 3 hours**, Refresh token expiry: **7 days**.
 5. **Admin role exists** in User model and `adminChecks` middleware exists. Admin-protected routes are mounted at `/api/admin`.
-7. **`trending` field** is defined and fully queried correctly in MongoDB.
-8. **CORS**: When `CORS_ORIGIN=*`, `credentials` is set to `false`. When restricted, credentials are allowed.
-9. **Vercel** routes all traffic to `src/app.js` (not `server.js`).
-10. **Signup accepts both `name` and `username`** fields (frontend sends `name`, model uses `username`).
+6. **`trending` field** is defined and fully queried correctly in MongoDB.
+7. **CORS**: When `CORS_ORIGIN=*`, `credentials` is set to `false`. When restricted, credentials are allowed. Localhost must be whitelisted in Vercel for local UI development.
+8. **Vercel** routes all traffic to `src/app.js` (not `server.js`).
+9. **Signup accepts both `name` and `username`** fields (frontend sends `name`, model uses `username`).
+
+---
+
+## 8. Frontend Guidelines
+
+1. **Avoid N+1 Network Requests:** Child components (like `DestinationCard`) should NOT fetch data on mount. Parent components (`Landing`, `Profile`, `Recommendations`) must batch fetch and pass state down as props (e.g. `isSaved`).
+2. **Data Unwrapping:** List endpoints return `{ success: boolean, count: number, data: array }`. Always unwrap `data` before iterating.
+3. **Error Handling:** Backend errors return `.message`. Never use `.detail` in `error.response`.
+4. **Dark Mode UI:** Never hardcode colors like `bg-white` or `text-white` on components that overlay adaptive backgrounds. Use Tailwind semantic variables (`bg-card`, `text-primary-foreground`, `text-muted-foreground`).
+5. **Form Autofill:** Use `autoComplete="new-password"` or `off` to prevent aggressive browser autofill on password change forms.
 
 ---
 

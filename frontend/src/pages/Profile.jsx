@@ -30,7 +30,7 @@ const Profile = () => {
           getSavedDestinations()
         ]);
         setProfile(profileData || {});
-        setSavedDestinations(savedData || []);
+        setSavedDestinations(Array.isArray(savedData?.data) ? savedData.data : []);
       } catch (error) {
         console.error('Error fetching profile:', error);
         toast.error('Failed to load profile');
@@ -45,7 +45,7 @@ const Profile = () => {
   const refreshSavedDestinations = async () => {
     try {
       const savedData = await getSavedDestinations();
-      setSavedDestinations(savedData || []);
+      setSavedDestinations(Array.isArray(savedData?.data) ? savedData.data : []);
     } catch (error) {
       console.error('Error refreshing saved destinations:', error);
     }
@@ -115,6 +115,7 @@ const Profile = () => {
                   <DestinationCard
                     destination={destination}
                     showSaveButton={true}
+                    isSaved={true}
                     onSaveChange={refreshSavedDestinations}
                   />
                 </MotionDiv>

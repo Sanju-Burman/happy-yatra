@@ -25,7 +25,7 @@ const Signup = ({ setUser }) => {
       toast.success("Account created successfully!");
       navigate("/survey", { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Signup failed");
+      toast.error(error.response?.data?.message || "Signup failed");
     } finally {
       setLoading(false);
     }

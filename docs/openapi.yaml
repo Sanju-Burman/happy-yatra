@@ -35,6 +35,12 @@ tags:
     description: Travel destination catalog — public endpoint
   - name: Survey
     description: User travel preference survey
+  - name: Recommendations
+    description: Personalized destination suggestions
+  - name: Saved Destinations
+    description: User favorites
+  - name: Admin
+    description: Administrative operations
 
 components:
   securitySchemes:
@@ -110,6 +116,15 @@ components:
         name:
           type: string
           example: "Goa"
+        description:
+          type: string
+          example: "A beautiful coastal state."
+        trending:
+          type: boolean
+          example: true
+        viewCount:
+          type: integer
+          example: 150
         imageUrl:
           type: string
           format: uri
@@ -682,3 +697,72 @@ paths:
                   error:
                     type: string
                     example: "Failed to fetch survey data"
+
+
+  # ─── RECOMMENDATIONS ────────────────────────────────────────────────────────
+  /recommendations:
+    get:
+      tags: [Recommendations]
+      summary: Get personalized recommendations
+      description: Returns destinations matching the user's travel survey.
+      operationId: getRecommendations
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Destination"
+
+  # ─── SAVED DESTINATIONS ───────────────────────────────────────────────────
+  /saved-destinations:
+    get:
+      tags: [Saved Destinations]
+      summary: Get user's saved destinations
+      operationId: getSavedDestinations
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+
+  /saved-destinations/{id}:
+    post:
+      tags: [Saved Destinations]
+      summary: Save a destination
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags: [Saved Destinations]
+      summary: Unsave a destination
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK

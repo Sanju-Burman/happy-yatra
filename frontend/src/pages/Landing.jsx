@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ArrowRight, Sparkles, MapPin, Heart, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
-import { getDestinations } from "@/api.jsx";
+import { getDestinations, getSavedDestinations } from "@/api.jsx";
 import DestinationCard from "@/components/DestinationCard.jsx";
 import ActionButton from "@/components/ActionButton.jsx";
 
@@ -9,6 +9,7 @@ const Landing = ({ user }) => {
   const MotionDiv = motion.div;
   const [trendingDestinations, setTrendingDestinations] = useState([]);
   const [otherDestinations, setOtherDestinations] = useState([]);
+  const [savedIds, setSavedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [viewLimit, setViewLimit] = useState(10);
 
@@ -28,7 +29,10 @@ const Landing = ({ user }) => {
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
-        const response = await getDestinations(1, 20);
+        const [response, savedData] = await Promise.all([
+          getDestinations(1, 20),
+          user ? getSavedDestinations().catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+        ]);
         const data = Array.isArray(response.data) ? response.data : [];
 
         const trending = data.filter((d) => d.trending === true);
@@ -36,6 +40,11 @@ const Landing = ({ user }) => {
 
         setTrendingDestinations(trending);
         setOtherDestinations(others);
+
+        const ids = new Set(
+          (Array.isArray(savedData?.data) ? savedData.data : []).map(d => d._id || d.id)
+        );
+        setSavedIds(ids);
       } catch (error) {
         console.error("Error fetching destinations:", error);
       } finally {
@@ -43,7 +52,7 @@ const Landing = ({ user }) => {
       }
     };
     fetchDestinations();
-  }, []);
+  }, [user]);
 
   const displayedTrending = trendingDestinations.slice(0, viewLimit);
   const remainingLimit = Math.max(0, viewLimit - displayedTrending.length);
@@ -253,6 +262,7 @@ const Landing = ({ user }) => {
                             <DestinationCard
                               destination={destination}
                               showSaveButton={!!user}
+                              isSaved={savedIds.has(destination._id || destination.id)}
                             />
                           </MotionDiv>
                         ))}
@@ -297,6 +307,7 @@ const Landing = ({ user }) => {
                             <DestinationCard
                               destination={destination}
                               showSaveButton={!!user}
+                              isSaved={savedIds.has(destination._id || destination.id)}
                             />
                           </MotionDiv>
                         ))}

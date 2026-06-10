@@ -80,7 +80,7 @@ const DestinationCard = ({ destination, showSaveButton, isSaved: isSavedProp = f
 
         {/* Trending Badge */}
         {destination.trending && (
-          <div className="absolute top-4 left-4 bg-primary text-white px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide">
+          <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide">
             Trending
           </div>
         )}

@@ -120,7 +120,7 @@ On any 401 response:
 | `refreshAccessToken()` | POST | `/auth/refresh` | ❌ |
 | `submitSurvey(preferences)` | POST | `/survey` | ❌ |
 | `getSurvey()` | GET | `/survey` | ❌ |
-| `getRecommendations()` | POST | `/recommendations` | ✅ |
+| `getRecommendations()` | GET | `/recommendations` | ✅ |
 | `getDestinations(page, limit, trending)` | GET | `/destinations` | ❌ |
 | `getDestination(id)` | GET | `/destinations/:id` | ❌ |
 | `saveDestination(id)` | POST | `/saved-destinations/:id` | ✅ |
@@ -200,7 +200,6 @@ VITE_GOOGLE_MAPS_API_KEY=your_key_here           # optional, for map feature
 
 | Issue | Location | Severity |
 |-------|----------|----------|
-| `getRecommendations()` calls `POST /recommendations` — this route does NOT exist on backend | `api.jsx` | High |
 | `saveDestination`, `unsaveDestination`, `getSavedDestinations` call `/saved-destinations/*` — not on backend | `api.jsx` | High |
 | `getConfig()` calls `/config` — not on backend | `api.jsx` / `MapPlaceholder.jsx` | Medium |
 | `DestinationCard` uses `destination.id` but backend returns `destination._id` | `DestinationCard.jsx` | High |

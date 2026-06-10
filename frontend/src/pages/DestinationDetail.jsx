@@ -97,9 +97,9 @@ const DestinationDetail = () => {
         <button
           onClick={() => navigate(-1)}
           data-testid="destination-back-button"
-          className="absolute top-8 left-8 bg-white/90 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all shadow-lg"
+          className="absolute top-8 left-8 bg-card/90 backdrop-blur-sm rounded-full p-3 hover:bg-card transition-all shadow-lg"
         >
-          <ArrowLeft className="w-6 h-6 text-secondary" strokeWidth={1.5} />
+          <ArrowLeft className="w-6 h-6 text-foreground" strokeWidth={1.5} />
         </button>
 
         {/* Save Button */}
@@ -107,10 +107,10 @@ const DestinationDetail = () => {
           onClick={handleSaveToggle}
           disabled={savingState}
           data-testid="destination-save-button"
-          className="absolute top-8 right-8 bg-white/90 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all shadow-lg disabled:opacity-50"
+          className="absolute top-8 right-8 bg-card/90 backdrop-blur-sm rounded-full p-3 hover:bg-card transition-all shadow-lg disabled:opacity-50"
         >
           <Heart
-            className={`w-6 h-6 ${isSaved ? 'fill-red-500 text-red-500' : 'text-foreground'}`}
+            className={`w-6 h-6 transition-colors ${isSaved ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
             strokeWidth={1.5}
           />
         </button>

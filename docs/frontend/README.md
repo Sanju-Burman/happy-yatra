@@ -61,7 +61,7 @@ VITE_Backend_API=http://localhost:9000/api
 
 | # | Issue | Fix |
 |---|-------|-----|
-| 1 | `/api/recommendations` does not exist on backend | Implement backend route or use `GET /destinations` |
+| 1 | `/api/recommendations` endpoint missing | Resolved: use `GET /api/recommendations` |
 | 2 | `/api/saved-destinations` endpoints missing | Implement on backend |
 | 3 | `destination.id` should be `destination._id` | Normalize in backend or frontend |
 | 4 | Survey sends `travel_style` but backend expects `travelStyle` | Rename in frontend payload |

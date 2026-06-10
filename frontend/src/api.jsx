@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const apiBase = import.meta.env.VITE_Backend_API || 'http://localhost:9000/api';
+// Use relative path for dev (via Vite proxy), full URL for production
+const apiBase = import.meta.env.VITE_Backend_API || (import.meta.env.DEV ? '/api' : 'http://localhost:9000/api');
 const API = apiBase.replace(/\/+$/, '');
 
 export const setAuthToken = (token) => {
@@ -169,7 +170,7 @@ export const getSurvey = async () => {
 };
 
 export const getRecommendations = async () => {
-  const response = await axios.post(`${API}/recommendations`);
+  const response = await axios.get(`${API}/recommendations`);
   return response.data;
 };
 
@@ -207,6 +208,21 @@ export const getProfile = async () => {
 
 export const getConfig = async () => {
   const response = await axios.get(`${API}/config`);
+  return response.data;
+};
+
+export const forgotPassword = async (email) => {
+  const response = await axios.post(`${API}/auth/forgot-password`, { email });
+  return response.data;
+};
+
+export const resetPassword = async (token, password) => {
+  const response = await axios.post(`${API}/auth/reset-password`, { token, password });
+  return response.data;
+};
+
+export const changePassword = async (oldPassword, newPassword) => {
+  const response = await axios.patch(`${API}/user/profile/password`, { oldPassword, newPassword });
   return response.data;
 };
 

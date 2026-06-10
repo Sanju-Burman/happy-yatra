@@ -1,28 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, MapPin } from 'lucide-react';
-import { saveDestination, unsaveDestination, getSavedDestinations } from '@/api.jsx';
+import { saveDestination, unsaveDestination } from '@/api.jsx';
 import { toast } from 'sonner';
 
-const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
+const DestinationCard = ({ destination, showSaveButton, isSaved: isSavedProp = false, onSaveChange }) => {
   const navigate = useNavigate();
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(isSavedProp);
   const [savingState, setSavingState] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
+  // Sync local state when parent prop changes
   useEffect(() => {
-    const checkSavedStatus = async () => {
-      if (showSaveButton) {
-        try {
-          const savedData = await getSavedDestinations();
-          setIsSaved(Array.isArray(savedData.data) && savedData.data.some(d => (d._id || d.id) === destination._id));
-        } catch (error) {
-          console.error('Error checking saved status:', error);
-        }
-      }
-    };
-    checkSavedStatus();
-  }, [destination._id, showSaveButton]);
+    setIsSaved(isSavedProp);
+  }, [isSavedProp]);
 
   const handleSaveToggle = async (e) => {
     e.stopPropagation();
@@ -89,7 +80,7 @@ const DestinationCard = ({ destination, showSaveButton, onSaveChange }) => {
 
         {/* Trending Badge */}
         {destination.trending && (
-          <div className="absolute top-4 left-4 bg-primary text-white px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide">
+          <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide">
             Trending
           </div>
         )}

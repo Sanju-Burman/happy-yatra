@@ -2,6 +2,7 @@ const Destination = require('../models/destination.model');
 const User = require('../models/user.model');
 const Survey = require('../models/surveyData.model');
 const ErrorResponse = require('../utils/ErrorResponse');
+const { getOrSet, CACHE_KEYS } = require('../lib/cache');
 
 // ─── DESTINATIONS ────────────────────────────────────────────
 
@@ -121,66 +122,78 @@ const getUserSurvey = async (req, res, next) => {
 // GET /api/admin/analytics
 const getAnalytics = async (req, res, next) => {
   try {
-    const [
-      totalUsers,
-      totalDestinations,
-      totalSurveys,
-      topDestinations,
-      trendingCount,
-      signupsByDay,
-      surveyInterests,
-      surveyBudgets
-    ] = await Promise.all([
+    const analyticsPayload = await getOrSet(
+      CACHE_KEYS.ANALYTICS,
+      300,
+      async () => {
+        const [
+          totalUsers,
+          totalDestinations,
+          totalSurveys,
+          topDestinations,
+          trendingCount,
+          signupsByDay,
+          surveyInterests,
+          surveyBudgets
+        ] = await Promise.all([
 
-      User.countDocuments(),
-      Destination.countDocuments(),
-      Survey.countDocuments(),
+          User.countDocuments(),
+          Destination.countDocuments(),
+          Survey.countDocuments(),
 
-      // Top 5 most viewed destinations
-      Destination.find().sort({ viewCount: -1 }).limit(5)
-        .select('name viewCount trending'),
+          // Top 5 most viewed destinations
+          Destination.find().sort({ viewCount: -1 }).limit(5)
+            .select('name viewCount trending'),
 
-      // How many destinations are trending
-      Destination.countDocuments({ trending: true }),
+          // How many destinations are trending
+          Destination.countDocuments({ trending: true }),
 
-      // Signups per day — last 30 days
-      User.aggregate([
-        { $match: { createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) } } },
-        { $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            count: { $sum: 1 }
-        }},
-        { $sort: { _id: 1 } }
-      ]),
+          // Signups per day — last 30 days
+          User.aggregate([
+            { $match: { createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) } } },
+            { $group: {
+                _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                count: { $sum: 1 }
+            }},
+            { $sort: { _id: 1 } }
+          ]),
 
-      // Most common survey interests
-      Survey.aggregate([
-        { $unwind: '$interests' },
-        { $group: { _id: '$interests', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 8 }
-      ]),
+          // Most common survey interests
+          Survey.aggregate([
+            { $unwind: '$interests' },
+            { $group: { _id: '$interests', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 8 }
+          ]),
 
-      // Budget distribution
-      Survey.aggregate([
-        { $group: { _id: '$travelStyle', count: { $sum: 1 } } },
-        { $sort: { count: -1 } }
-      ])
-    ]);
+          // Budget distribution
+          Survey.aggregate([
+            { $group: { _id: '$budget', count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+          ])
+        ]);
 
-    const surveyCompletionRate = totalUsers > 0
-      ? ((totalSurveys / totalUsers) * 100).toFixed(1)
-      : 0;
+        const surveyCompletionRate = totalUsers > 0
+          ? ((totalSurveys / totalUsers) * 100).toFixed(1)
+          : 0;
 
-    res.json({
-      totals: { users: totalUsers, destinations: totalDestinations,
-                surveys: totalSurveys, trending: trendingCount },
-      surveyCompletionRate,
-      topDestinations,
-      signupsByDay,
-      surveyInterests,
-      surveyBudgets
-    });
+        return {
+          totals: {
+            users: totalUsers,
+            destinations: totalDestinations,
+            surveys: totalSurveys,
+            trending: trendingCount
+          },
+          surveyCompletionRate,
+          topDestinations,
+          signupsByDay,
+          surveyInterests,
+          surveyBudgets
+        };
+      }
+    );
+
+    res.json(analyticsPayload);
   } catch (error) {
     next(error);
   }

@@ -65,7 +65,7 @@ describe('Auth Endpoints', () => {
                 .post('/api/auth/signup')
                 .send(testUser);
 
-            expect(res.status).toBe(500);
+            expect(res.status).toBe(400);
         });
     });
 
@@ -90,7 +90,7 @@ describe('Auth Endpoints', () => {
                 .post('/api/auth/login')
                 .send({ email: testUser.email, password: 'WrongPassword!' });
 
-            expect(res.status).toBe(500);
+            expect(res.status).toBe(401);
         });
 
         it('should reject login with missing fields', async () => {
@@ -130,6 +130,7 @@ describe('Auth Endpoints', () => {
         it('should blacklist tokens on logout', async () => {
             const res = await request
                 .post('/api/auth/logout')
+                .set('Authorization', `Bearer ${accessToken}`)
                 .send({ accessToken, refreshToken });
 
             expect(res.status).toBe(200);

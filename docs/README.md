@@ -52,7 +52,7 @@ DELETE /api/saved-destinations/:id  [AUTH] Unsave a destination
 POST   /api/survey               [AUTH] Submit travel preferences
 GET    /api/survey               [AUTH] Get user's survey submissions
 
-POST   /api/recommendations     [AUTH] Get personalized recommendations
+GET    /api/recommendations     [AUTH] Get personalized recommendations
 ```
 
 ### Environment Variables (`.env` in `backend/`)
@@ -88,6 +88,11 @@ CORS_ORIGIN=http://localhost:5173,https://happyyatra.netlify.app
 | 11| Trending field not in schema | Fixed — added `trending: Boolean` |
 | 12| No pagination metadata | Fixed — returns `{total, page, totalPages, hasNextPage, hasPrevPage}` |
 | 13| Refresh token not rotated | Fixed — old refresh token blacklisted on refresh |
+| 14| N+1 frontend network bug | Parent components batch fetch saved destinations to prevent redundant API calls |
+| 15| Profile page rendering bug | Fixed unwrapping of `savedData.data` array from API wrapper |
+| 16| Auth error messages incorrect | Changed UI to read `.message` instead of `.detail` matching backend contract |
+| 17| Dark mode UI contrast issues | Replaced hardcoded `bg-white/90` and `text-white` with Tailwind semantic variables |
+| 18| Password autofill bug | Prevented eager Chrome autofill on update form via `autoComplete="new-password"` |
 
 ---
 

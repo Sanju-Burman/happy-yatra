@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, MapPin, Heart, TrendingUp } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { getDestinations } from '@/api.jsx';
-import DestinationCard from '@/components/DestinationCard.jsx';
+import React, { useState, useEffect } from "react";
+import { ArrowRight, Sparkles, MapPin, Heart, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
+import { getDestinations, getSavedDestinations } from "@/api.jsx";
+import DestinationCard from "@/components/DestinationCard.jsx";
+import ActionButton from "@/components/ActionButton.jsx";
 
 const Landing = ({ user }) => {
+  const MotionDiv = motion.div;
   const [trendingDestinations, setTrendingDestinations] = useState([]);
   const [otherDestinations, setOtherDestinations] = useState([]);
+  const [savedIds, setSavedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [viewLimit, setViewLimit] = useState(10);
 
@@ -20,29 +22,37 @@ const Landing = ({ user }) => {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
-        const response = await getDestinations(1, 20);
+        const [response, savedData] = await Promise.all([
+          getDestinations(1, 20),
+          user ? getSavedDestinations().catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+        ]);
         const data = Array.isArray(response.data) ? response.data : [];
-        
-        const trending = data.filter(d => d.trending === true);
-        const others = data.filter(d => d.trending !== true);
-        
+
+        const trending = data.filter((d) => d.trending === true);
+        const others = data.filter((d) => d.trending !== true);
+
         setTrendingDestinations(trending);
         setOtherDestinations(others);
+
+        const ids = new Set(
+          (Array.isArray(savedData?.data) ? savedData.data : []).map(d => d._id || d.id)
+        );
+        setSavedIds(ids);
       } catch (error) {
-        console.error('Error fetching destinations:', error);
+        console.error("Error fetching destinations:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchDestinations();
-  }, []);
+  }, [user]);
 
   const displayedTrending = trendingDestinations.slice(0, viewLimit);
   const remainingLimit = Math.max(0, viewLimit - displayedTrending.length);
@@ -64,7 +74,7 @@ const Landing = ({ user }) => {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 lg:px-24 py-20">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -74,61 +84,81 @@ const Landing = ({ user }) => {
               Discover Your Perfect Destination
             </h1>
             <p className="text-white/90 text-lg md:text-xl leading-relaxed mb-8 max-w-2xl">
-              Personalized travel recommendations powered by AI. Tell us your preferences, and we'll guide you to unforgettable places.
+              Personalized travel recommendations powered by AI. Tell us your
+              preferences, and we'll guide you to unforgettable places.
             </p>
             <div className="flex gap-4 flex-wrap">
               {user ? (
-                <Link
+                <ActionButton
                   to="/survey"
                   data-testid="hero-start-survey-button"
-                  className="bg-primary text-white rounded-full px-8 py-4 hover:bg-[#A04B32] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 font-medium tracking-wide inline-flex items-center gap-2"
+                  size="lg"
                 >
-                  Start Your Journey <ArrowRight className="w-5 h-5" strokeWidth={2} />
-                </Link>
+                  Start Your Journey{" "}
+                  <ArrowRight className="w-5 h-5" strokeWidth={2} />
+                </ActionButton>
               ) : (
                 <>
-                  <Link
+                  <ActionButton
                     to="/signup"
                     data-testid="hero-signup-button"
-                    className="bg-primary text-primary-foreground rounded-full px-8 py-4 hover:bg-[#A04B32] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 font-medium tracking-wide inline-flex items-center gap-2"
+                    size="lg"
                   >
-                    Get Started <ArrowRight className="w-5 h-5" strokeWidth={2} />
-                  </Link>
-                  <Link
+                    Get Started{" "}
+                    <ArrowRight className="w-5 h-5" strokeWidth={2} />
+                  </ActionButton>
+                  <ActionButton
                     to="/login"
                     data-testid="hero-login-button"
-                    className="bg-transparent border-2 border-white text-white rounded-full px-8 py-4 hover:bg-[#A04B32] hover:text-secondary transition-all duration-300 font-medium tracking-wide"
+                    variant="heroSecondary"
+                    size="lg"
                   >
                     Login
-                  </Link>
+                  </ActionButton>
                 </>
               )}
             </div>
-          </motion.div>
+          </MotionDiv>
         </div>
       </section>
 
       {/* Features Section */}
       <section className="py-20 md:py-32 px-6 md:px-12 lg:px-24">
         <div className="max-w-7xl mx-auto">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-heading text-4xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">Why Choose Happy Yatraa</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Intelligent recommendations tailored just for you</p>
-          </motion.div>
+            <h2 className="font-heading text-4xl md:text-5xl font-bold text-foreground mb-4 tracking-tight">
+              Why Choose Happy Yatraa
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Intelligent recommendations tailored just for you
+            </p>
+          </MotionDiv>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: Sparkles, title: 'AI-Powered Recommendations', desc: 'Advanced algorithms analyze your preferences to suggest perfect destinations' },
-              { icon: MapPin, title: 'Interactive Maps', desc: 'Visualize destinations with integrated Google Maps for better planning' },
-              { icon: Heart, title: 'Save Your Favorites', desc: 'Build your travel wishlist by saving destinations you love' },
+              {
+                icon: Sparkles,
+                title: "AI-Powered Recommendations",
+                desc: "Advanced algorithms analyze your preferences to suggest perfect destinations",
+              },
+              {
+                icon: MapPin,
+                title: "Interactive Maps",
+                desc: "Visualize destinations with integrated Google Maps for better planning",
+              },
+              {
+                icon: Heart,
+                title: "Save Your Favorites",
+                desc: "Build your travel wishlist by saving destinations you love",
+              },
             ].map((feature, idx) => (
-              <motion.div
+              <MotionDiv
                 key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -137,10 +167,17 @@ const Landing = ({ user }) => {
                 data-testid={`feature-card-${idx}`}
                 className="bg-muted p-8 rounded-xl border border-transparent hover:border-primary/20 transition-all duration-300"
               >
-                <feature.icon className="w-12 h-12 text-primary mb-4" strokeWidth={1.5} />
-                <h3 className="font-heading text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
-              </motion.div>
+                <feature.icon
+                  className="w-12 h-12 text-primary mb-4"
+                  strokeWidth={1.5}
+                />
+                <h3 className="font-heading text-xl font-semibold text-foreground mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {feature.desc}
+                </p>
+              </MotionDiv>
             ))}
           </div>
         </div>
@@ -149,7 +186,7 @@ const Landing = ({ user }) => {
       {/* Trending Destinations */}
       <section className="py-20 md:py-32 px-6 md:px-12 lg:px-24 bg-background">
         <div className="max-w-7xl mx-auto">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -158,20 +195,33 @@ const Landing = ({ user }) => {
           >
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-6 h-6 text-primary" strokeWidth={1.5} />
-                <span className="font-mono text-xs uppercase tracking-wide text-primary">Popular Picks</span>
+                <TrendingUp
+                  className="w-6 h-6 text-primary"
+                  strokeWidth={1.5}
+                />
+                <span className="font-mono text-xs uppercase tracking-wide text-primary">
+                  Popular Picks
+                </span>
               </div>
-              <h2 className="font-heading text-4xl md:text-5xl font-bold text-foreground tracking-tight">Trending Destinations</h2>
+              <h2 className="font-heading text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+                Trending Destinations
+              </h2>
             </div>
-          </motion.div>
+          </MotionDiv>
 
           {loading ? (
             <div className="text-center py-12">Loading destinations...</div>
           ) : (
             <>
-              {displayedTrending.length === 0 && displayedOthers.length === 0 ? (
-                <div data-testid="empty-state" className="col-span-full text-center py-12 text-muted-foreground bg-muted/30 rounded-2xl border-2 border-dashed border-border">
-                  <p className="text-lg">No destinations available at the moment.</p>
+              {displayedTrending.length === 0 &&
+              displayedOthers.length === 0 ? (
+                <div
+                  data-testid="empty-state"
+                  className="col-span-full text-center py-12 text-muted-foreground bg-muted/30 rounded-2xl border-2 border-dashed border-border"
+                >
+                  <p className="text-lg">
+                    No destinations available at the moment.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-16">
@@ -181,23 +231,40 @@ const Landing = ({ user }) => {
                       <div className="flex items-center justify-between mb-8">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <TrendingUp className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                            <span className="font-mono text-xs uppercase tracking-wide text-primary">Featured</span>
+                            <TrendingUp
+                              className="w-5 h-5 text-primary"
+                              strokeWidth={1.5}
+                            />
+                            <span className="font-mono text-xs uppercase tracking-wide text-primary">
+                              Featured
+                            </span>
                           </div>
-                          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">Trending Destinations</h2>
+                          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">
+                            Trending Destinations
+                          </h2>
                         </div>
                       </div>
-                      <div data-testid="trending-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                      <div
+                        data-testid="trending-grid"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                      >
                         {displayedTrending.map((destination, idx) => (
-                          <motion.div
+                          <MotionDiv
                             key={destination._id || destination.id}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: (idx % 4) * 0.1 }}
+                            transition={{
+                              duration: 0.6,
+                              delay: (idx % 4) * 0.1,
+                            }}
                             viewport={{ once: true }}
                           >
-                            <DestinationCard destination={destination} showSaveButton={!!user} />
-                          </motion.div>
+                            <DestinationCard
+                              destination={destination}
+                              showSaveButton={!!user}
+                              isSaved={savedIds.has(destination._id || destination.id)}
+                            />
+                          </MotionDiv>
                         ))}
                       </div>
                     </div>
@@ -209,23 +276,40 @@ const Landing = ({ user }) => {
                       <div className="flex items-center justify-between mb-8">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <Sparkles className="w-5 h-5 text-primary" strokeWidth={1.5} />
-                            <span className="font-mono text-xs uppercase tracking-wide text-primary">Discover More</span>
+                            <Sparkles
+                              className="w-5 h-5 text-primary"
+                              strokeWidth={1.5}
+                            />
+                            <span className="font-mono text-xs uppercase tracking-wide text-primary">
+                              Discover More
+                            </span>
                           </div>
-                          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">Explore Our Recommendations</h2>
+                          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">
+                            Explore Our Recommendations
+                          </h2>
                         </div>
                       </div>
-                      <div data-testid="others-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                      <div
+                        data-testid="others-grid"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                      >
                         {displayedOthers.map((destination, idx) => (
-                          <motion.div
+                          <MotionDiv
                             key={destination._id || destination.id}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: (idx % 4) * 0.1 }}
+                            transition={{
+                              duration: 0.6,
+                              delay: (idx % 4) * 0.1,
+                            }}
                             viewport={{ once: true }}
                           >
-                            <DestinationCard destination={destination} showSaveButton={!!user} />
-                          </motion.div>
+                            <DestinationCard
+                              destination={destination}
+                              showSaveButton={!!user}
+                              isSaved={savedIds.has(destination._id || destination.id)}
+                            />
+                          </MotionDiv>
                         ))}
                       </div>
                     </div>

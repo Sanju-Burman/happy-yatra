@@ -108,7 +108,7 @@ export const getSurvey = async () => {
 };
 
 export const getRecommendations = async () => {
-  const response = await axios.post(`${API}/recommendations`);
+  const response = await axios.get(`${API}/recommendations`);
   return response.data;
 };
 

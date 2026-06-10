@@ -51,8 +51,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/signup",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "signup"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
             },
             "description": "Register a new user. Returns tokens immediately (auto-login on signup).\n\nAccepts either `name` or `username` field — both are normalized to `username` in the DB."
           },
@@ -122,8 +127,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Login with email + password. The test script auto-saves `access_token` and `refresh_token` to collection variables."
           },
@@ -178,8 +188,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Exchange a valid refresh token for a new access token. Refresh token is NOT rotated."
           },
@@ -219,8 +234,13 @@
             },
             "url": {
               "raw": "{{base_url}}/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             },
             "description": "Invalidates both tokens by adding them to the blacklist. MongoDB TTL index auto-removes them after expiry."
           },
@@ -251,8 +271,13 @@
             ],
             "url": {
               "raw": "{{base_url}}/auth/data",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "data"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "data"
+              ]
             },
             "description": "Test endpoint to verify bearer token is valid and not blacklisted."
           },
@@ -289,8 +314,13 @@
             ],
             "url": {
               "raw": "{{base_url}}/user/profile",
-              "host": ["{{base_url}}"],
-              "path": ["user", "profile"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user",
+                "profile"
+              ]
             },
             "description": "Fetch the authenticated user's full profile. Email is extracted from the JWT payload."
           },
@@ -321,8 +351,12 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/destinations?page=1&limit=12",
-              "host": ["{{base_url}}"],
-              "path": ["destinations"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destinations"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -365,8 +399,13 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/destinations/:id",
-              "host": ["{{base_url}}"],
-              "path": ["destinations", ":id"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destinations",
+                ":id"
+              ],
               "variable": [
                 {
                   "key": "id",
@@ -404,8 +443,12 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/destinations?trending=true&limit=10",
-              "host": ["{{base_url}}"],
-              "path": ["destinations"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "destinations"
+              ],
               "query": [
                 {
                   "key": "trending",
@@ -424,7 +467,7 @@
     },
     {
       "name": "Survey",
-      "description": "Travel preference survey endpoints — currently unauthenticated",
+      "description": "Travel preference survey endpoints — Requires Bearer token",
       "item": [
         {
           "name": "Submit Survey",
@@ -434,11 +477,15 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user\": \"64abc123def456ghi789jkl\",\n  \"travelStyle\": \"adventure\",\n  \"budget\": 30000,\n  \"interests\": [\"nature\", \"culture\", \"history\"],\n  \"activities\": [\"hiking\", \"photography\", \"local food\"]\n}",
+              "raw": "{\n  \"travelStyle\": \"adventure\",\n  \"budget\": 30000,\n  \"interests\": [\n    \"nature\",\n    \"culture\",\n    \"history\"\n  ],\n  \"activities\": [\n    \"hiking\",\n    \"photography\",\n    \"local food\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -447,10 +494,14 @@
             },
             "url": {
               "raw": "{{base_url}}/survey",
-              "host": ["{{base_url}}"],
-              "path": ["survey"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "survey"
+              ]
             },
-            "description": "Submit travel preference data. The `user` field must be a valid MongoDB ObjectId. Note: This endpoint is currently unauthenticated — the user identity is taken on trust from the body."
+            "description": "Submit travel preference data. The user identity is taken from the JWT token."
           },
           "response": [
             {
@@ -479,10 +530,20 @@
             "method": "GET",
             "url": {
               "raw": "{{base_url}}/survey",
-              "host": ["{{base_url}}"],
-              "path": ["survey"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "survey"
+              ]
             },
-            "description": "⚠️ WARNING: Fetches ALL survey records sorted newest first. This endpoint is unprotected and exposes all user survey data. Should be restricted to admin users."
+            "description": "Fetches survey records. Regular users see their own, admins see all.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ]
           },
           "response": [
             {
@@ -492,6 +553,145 @@
               "body": "[\n  {\n    \"_id\": \"...\",\n    \"user\": \"64abc123...\",\n    \"travelStyle\": \"adventure\",\n    \"budget\": 30000,\n    \"interests\": [\"nature\"],\n    \"activities\": [\"hiking\"],\n    \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n]"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Recommendations",
+      "description": "Personalized travel destination recommendations",
+      "item": [
+        {
+          "name": "Get Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/recommendations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "recommendations"
+              ]
+            },
+            "description": "Get personalized destination recommendations based on the user's latest survey data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Saved Destinations",
+      "description": "Manage saved destinations (favorites)",
+      "item": [
+        {
+          "name": "Get Saved Destinations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/saved-destinations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "saved-destinations"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Save Destination",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/saved-destinations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "saved-destinations",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "64xyz..."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unsave Destination",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/saved-destinations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "saved-destinations",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "64xyz..."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative endpoints. Requires admin role.",
+      "item": [
+        {
+          "name": "Get Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/analytics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "analytics"
+              ]
+            }
+          }
         }
       ]
     }

@@ -20,17 +20,20 @@ const app = express();
 
 const allowedOrigins = (process.env.CORS_ORIGIN || '*')
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/$/, '')) // Strip trailing slashes
     .filter(Boolean);
 
 const allowAllOrigins = allowedOrigins.includes('*');
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (allowAllOrigins || !origin || allowedOrigins.includes(origin)) {
+        const cleanOrigin = origin ? origin.replace(/\/$/, '') : null;
+        if (allowAllOrigins || !cleanOrigin || allowedOrigins.includes(cleanOrigin)) {
             return callback(null, true);
         }
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
+        const error = new Error(`CORS blocked for origin: ${origin}`);
+        error.statusCode = 403;
+        return callback(error);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -1,4 +1,5 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
+const { jsonrepair } = require('jsonrepair');
 
 /**
  * GeminiService
@@ -11,9 +12,9 @@ class GeminiService {
             console.error('WARNING: GEMINI_API_KEY is not defined in the environment variables.');
         }
         this.genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-        this.modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+        this.modelName = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+        this.maxTokens = 8192;
         this.temperature = parseFloat(process.env.GEMINI_TEMPERATURE || '0.7');
-        this.maxTokens = parseInt(process.env.GEMINI_MAX_OUTPUT_TOKENS || '4096', 10);
     }
 
     /**
@@ -41,51 +42,70 @@ class GeminiService {
         const prompt = `You are an expert travel concierge assistant. Based on the user's travel profile, recommend exactly 10 specific destinations.
 
 User Travel Profile:
-- Travel Style: ${travelStyle} (e.g. Solo, Couple, Family, Friends, Business)
+- Travel Style: ${travelStyle}
 - Budget Level: ${budgetDescription}
 - Interests: ${interests.join(', ')}
 - Preferred Activities: ${activities.join(', ')}
-
-Output Format Requirements:
-- You must output a JSON array containing exactly 10 destinations. Do not include markdown code block formatting like \`\`\`json. Output ONLY the raw JSON string.
-- Each destination object in the array must strictly conform to the following schema:
-{
-  "name": "The name of the destination (e.g. Kyoto, Banff National Park, Maui)",
-  "location": "The city/state/region and country (e.g. Japan, Alberta, Canada, Hawaii, USA)",
-  "latitude": number (floating point latitude, e.g. 35.0116),
-  "longitude": number (floating point longitude, e.g. 135.7681),
-  "averageCost": number (Estimated average cost per day in USD as a number, e.g. 80, 150, 450),
-  "styles": ["A list of travel styles this fits. Include the user's style '${travelStyle}' and other relevant ones"],
-  "tags": ["A list of interests/tags this destination meets. Include relevant ones from: ${interests.join(', ')}"],
-  "activities": ["A list of specific activities to do there. Include relevant ones from: ${activities.join(', ')}"],
-  "imageUrl": "A valid public Unsplash image URL representative of this destination (e.g. https://images.unsplash.com/photo-... or a high-quality travel image link)",
-  "description": "A compelling 2-3 sentence description explaining why this destination matches the user's interests, budget, and travel style."
-}
 
 Ensure the 10 recommendations are diverse and align beautifully with the user's budget and interests. Check that coordinates (latitude and longitude) are geographically accurate for the recommended location.`;
 
         const model = this.genAI.getGenerativeModel({ model: this.modelName });
 
+        const schema = {
+            type: SchemaType.ARRAY,
+            description: "List of exactly 10 recommended travel destinations",
+            items: {
+                type: SchemaType.OBJECT,
+                properties: {
+                    name: { type: SchemaType.STRING, description: "Name of the destination" },
+                    location: { type: SchemaType.STRING, description: "City, State/Region, Country" },
+                    latitude: { type: SchemaType.NUMBER, description: "Geographic latitude" },
+                    longitude: { type: SchemaType.NUMBER, description: "Geographic longitude" },
+                    averageCost: { type: SchemaType.NUMBER, description: "Estimated average cost per day in USD" },
+                    styles: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Travel styles" },
+                    tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Relevant interests or tags" },
+                    activities: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Specific activities to do there" },
+                    imageUrl: { type: SchemaType.STRING, description: "Valid Unsplash image URL" },
+                    description: { type: SchemaType.STRING, description: "2-3 sentence description" }
+                },
+                required: ["name", "location", "latitude", "longitude", "averageCost", "styles", "tags", "activities", "imageUrl", "description"]
+            }
+        };
+
         const response = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: {
                 responseMimeType: 'application/json',
+                responseSchema: schema,
                 temperature: this.temperature,
                 maxOutputTokens: this.maxTokens
             }
         });
 
-        const textResponse = response.response.text();
+        let textResponse = response.response.text();
         if (!textResponse) {
             throw new Error('Received empty response from Gemini API');
         }
+        
+        // Clean up markdown block if present
+        textResponse = textResponse.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
         let parsedData;
         try {
             parsedData = JSON.parse(textResponse);
         } catch (e) {
-            console.error('Failed to parse Gemini JSON response:', textResponse);
-            throw new Error('Gemini response could not be parsed as valid JSON: ' + e.message);
+            // JSON parsing failed — Gemini truncated the response mid-generation.
+            // This happens when the model's output hits API token limits before completing.
+            // jsonrepair closes any open strings, arrays, or objects to recover valid JSON.
+            console.warn(`[Gemini] Truncated JSON detected (${e.message}). Attempting auto-repair...`);
+            try {
+                const repairedText = jsonrepair(textResponse);
+                parsedData = JSON.parse(repairedText);
+                console.log(`[Gemini] JSON repaired successfully. Recovered ${parsedData.length} items.`);
+            } catch (repairError) {
+                console.error('[Gemini] jsonrepair also failed. Raw response:', textResponse);
+                throw new Error('Gemini response could not be parsed as valid JSON: ' + e.message);
+            }
         }
 
         return this.validateAndNormalizeResponse(parsedData);

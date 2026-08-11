@@ -552,6 +552,52 @@ Get personalized destination recommendations based on the user's latest survey d
 
 ---
 
+### GET `/api/recommendations/ai`
+
+Get AI-based destination recommendations using Google Gemini, based on the user's latest survey preferences. Returns 10 AI-curated recommendations (hydrated/saved to the database and cached) and a list of additional relevant database matches.
+
+**Auth Required:** ✅ Bearer Token
+
+**Success Response — `200 OK`:**
+```json
+{
+  "success": true,
+  "aiRecommendations": [
+    {
+      "_id": "64xyz789...",
+      "name": "Kyoto",
+      "imageUrl": "https://...",
+      "averageCost": 150,
+      "styles": ["Solo", "Culture"],
+      "tags": ["Culture", "History"],
+      "activities": ["Temple tour", "Tea ceremony"],
+      "location": "Kyoto, Japan",
+      "latitude": 35.0116,
+      "longitude": 135.7681,
+      "trending": false,
+      "description": "Kyoto perfectly matches your interest in culture with historic temples and beautiful traditional gardens."
+    }
+  ],
+  "additionalRecommendations": [
+    {
+      "_id": "64xyz890...",
+      "name": "Tokyo",
+      ...
+    }
+  ],
+  "fromCache": false
+}
+```
+
+**Error Responses:**
+| Status | Condition | Body |
+|--------|-----------|------|
+| `400` | No survey submitted | `{"message": "Please complete the survey first to get recommendations."}` |
+| `401` | No/invalid token | *(see auth errors)* |
+
+
+---
+
 ## Module 7: Admin Panel (`/api/admin`)
 
 This module requires a valid JWT with the `admin` role.

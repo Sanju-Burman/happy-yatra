@@ -194,6 +194,12 @@ export const getRecommendations = async () => {
   return response.data;
 };
 
+export const getAiRecommendations = async () => {
+  const response = await axios.get(`${API}/recommendations/ai`);
+  return response.data;
+};
+
+
 export const getDestinations = async (page = 1, limit = 12, trending = null) => {
   const params = { page, limit };
   if (trending !== null) params.trending = trending;

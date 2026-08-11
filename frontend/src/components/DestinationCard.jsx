@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, MapPin } from 'lucide-react';
+import { Heart, MapPin, Sparkles } from 'lucide-react';
 import { saveDestination, unsaveDestination } from '@/api.jsx';
 import { toast } from 'sonner';
 
-const DestinationCard = ({ destination, showSaveButton, isSaved: isSavedProp = false, onSaveChange }) => {
+const DestinationCard = ({ destination, showSaveButton, isSaved: isSavedProp = false, onSaveChange, isAiRecommended = false }) => {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(isSavedProp);
   const [savingState, setSavingState] = useState(false);
@@ -78,12 +78,21 @@ const DestinationCard = ({ destination, showSaveButton, isSaved: isSavedProp = f
           </button>
         )}
 
-        {/* Trending Badge */}
-        {destination.trending && (
-          <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide">
-            Trending
-          </div>
-        )}
+        {/* Badges Container */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+          {destination.trending && (
+            <div className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide w-fit shadow-md">
+              Trending
+            </div>
+          )}
+          {isAiRecommended && (
+            <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-primary text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide flex items-center gap-1 shadow-md border border-white/20 w-fit">
+              <Sparkles className="w-3.5 h-3.5 fill-white" strokeWidth={2} />
+              AI Recommended
+            </div>
+          )}
+        </div>
+
 
         {/* Content Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6">

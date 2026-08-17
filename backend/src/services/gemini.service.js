@@ -1,6 +1,8 @@
 const { GoogleGenerativeAI, SchemaType } = require('@google/generative-ai');
 const { jsonrepair } = require('jsonrepair');
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * GeminiService
  * Handles communication with Google Gemini API to retrieve structured destination recommendations.
@@ -49,8 +51,6 @@ User Travel Profile:
 
 Ensure the 10 recommendations are diverse and align beautifully with the user's budget and interests. Check that coordinates (latitude and longitude) are geographically accurate for the recommended location.`;
 
-        const model = this.genAI.getGenerativeModel({ model: this.modelName });
-
         const schema = {
             type: SchemaType.ARRAY,
             description: "List of exactly 10 recommended travel destinations",
@@ -72,19 +72,80 @@ Ensure the 10 recommendations are diverse and align beautifully with the user's 
             }
         };
 
-        const response = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-                responseMimeType: 'application/json',
-                responseSchema: schema,
-                temperature: this.temperature,
-                maxOutputTokens: this.maxTokens
+        // Determine list of models to try
+        const userConfiguredModel = process.env.GEMINI_MODEL || this.modelName;
+        const candidateModels = [
+            userConfiguredModel,
+            'gemini-flash-latest',
+            'gemini-3.5-flash',
+            'gemini-3.6-flash',
+            'gemini-flash-lite-latest',
+            'gemini-3.5-flash-lite'
+        ];
+        
+        // Deduplicate candidates while keeping order
+        const modelsToTry = [...new Set(candidateModels)];
+
+        let lastError = null;
+        let response = null;
+        let activeModelName = null;
+
+        for (const modelName of modelsToTry) {
+            let attempts = 3;
+            let delay = 1000; // start with 1 second delay
+            
+            console.log(`[Gemini] Attempting recommendation generation with model: ${modelName}`);
+            
+            while (attempts > 0) {
+                try {
+                    const model = this.genAI.getGenerativeModel({ model: modelName });
+                    response = await model.generateContent({
+                        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            responseMimeType: 'application/json',
+                            responseSchema: schema,
+                            temperature: this.temperature,
+                            maxOutputTokens: this.maxTokens
+                        }
+                    });
+                    
+                    if (response) {
+                        activeModelName = modelName;
+                        break; // Success! Break retry loop
+                    }
+                } catch (err) {
+                    attempts--;
+                    lastError = err;
+                    const isTransient = err.status === 503 || err.status === 429 || 
+                                        err.message.includes('503') || err.message.includes('429') ||
+                                        err.message.includes('Service Unavailable') || err.message.includes('Too Many Requests') ||
+                                        err.message.includes('quota') || err.message.includes('high demand');
+                    
+                    console.warn(`[Gemini] Attempt with ${modelName} failed (status: ${err.status || 'unknown'}, message: ${err.message.slice(0, 100)}). Remaining attempts for this model: ${attempts}`);
+                    
+                    if (attempts > 0 && isTransient) {
+                        console.log(`[Gemini] Retrying in ${delay}ms...`);
+                        await sleep(delay);
+                        delay *= 2; // exponential backoff
+                    } else {
+                        // If no attempts left or it is a non-transient error (e.g. 404), break to try next model
+                        break;
+                    }
+                }
             }
-        });
+            
+            if (response) {
+                break; // Got a valid response from this model, break model loop
+            }
+        }
+
+        if (!response) {
+            throw new Error(`Failed to generate recommendations from all candidate Gemini models. Last error: ${lastError ? lastError.message : 'Unknown'}`);
+        }
 
         let textResponse = response.response.text();
         if (!textResponse) {
-            throw new Error('Received empty response from Gemini API');
+            throw new Error(`Received empty response from Gemini API using model: ${activeModelName}`);
         }
         
         // Clean up markdown block if present
@@ -97,7 +158,7 @@ Ensure the 10 recommendations are diverse and align beautifully with the user's 
             // JSON parsing failed — Gemini truncated the response mid-generation.
             // This happens when the model's output hits API token limits before completing.
             // jsonrepair closes any open strings, arrays, or objects to recover valid JSON.
-            console.warn(`[Gemini] Truncated JSON detected (${e.message}). Attempting auto-repair...`);
+            console.warn(`[Gemini] Truncated JSON detected (${e.message}) with model ${activeModelName}. Attempting auto-repair...`);
             try {
                 const repairedText = jsonrepair(textResponse);
                 parsedData = JSON.parse(repairedText);

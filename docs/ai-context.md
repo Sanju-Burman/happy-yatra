@@ -32,7 +32,8 @@ backend/
     │   ├── user.model.js        # Collection: 'Users' — username, email, password (select:false), role
     │   ├── destination.model.js # Collection: 'destinations' — name, imageUrl, averageCost, styles[], tags[], activities[], location, lat, lng
     │   ├── surveyData.model.js  # Collection: 'Survey' — user(ref), travelStyle, budget, interests[], activities[]
-    │   └── tokenBlocking.model.js # Collection: 'TokenBlacklist' — token, type, expiresAt (TTL index)
+    │   ├── tokenBlocking.model.js # Collection: 'TokenBlacklist' — token, type, expiresAt (TTL index)
+    │   └── aiRecommendation.model.js # Collection: 'airecommendations' — user(ref), surveyHash, destinationIds(refs), rawResponse, expiresAt (TTL index)
     ├── middlewares/
     │   └── Auth.middleware.js   # verifyToken, adminChecks
     ├── services/
@@ -82,6 +83,12 @@ backend/
 // TTL index on expiresAt → auto-deletes expired blacklisted tokens
 ```
 
+### AiRecommendation (`airecommendations` collection)
+```js
+{ user: ObjectId(ref:Users), surveyHash: String, destinationIds: [ObjectId(ref:destinations)], rawResponse: Mixed, expiresAt: Date, createdAt, updatedAt }
+// TTL index on expiresAt → auto-deletes cached recommendation when expired
+```
+
 ---
 
 ## 4. API Contract Summary
@@ -116,6 +123,7 @@ backend/
 | Method | Path | Auth | Body | Response |
 |--------|------|------|------|----------|
 | GET | `/` | ✅ Bearer | — | `{success, count, data: Destination[]}` |
+| GET | `/ai` | ✅ Bearer | — | `{success, fromCache, aiRecommendations: Destination[], additionalRecommendations: Destination[]}` |
 
 ### Saved Destinations — `/api/saved-destinations`
 | Method | Path | Auth | Body | Response |
@@ -213,6 +221,11 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 | `JWT_ACCESS_KEY` | Secret key for access token signing |
 | `JWT_REFRESH_KEY` | Secret key for refresh token signing |
 | `CORS_ORIGIN` | Comma-separated allowed origins (use `*` for all) |
+| `GEMINI_API_KEY` | API Key for Google Generative AI API |
+| `GEMINI_MODEL` | Gemini Model Identifier (e.g., `gemini-flash-latest`) |
+| `GEMINI_MAX_OUTPUT_TOKENS` | Max tokens count to configure Gemini response limits |
+| `GEMINI_TEMPERATURE` | Generation creativity factor (0.0 to 1.0) |
+| `GEMINI_CACHE_TTL_HOURS` | Lifetime duration in hours to keep AI recommendations cached |
 
 ---
 
@@ -249,6 +262,7 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 | ODM | Mongoose 8.x |
 | Auth | jsonwebtoken 9.x + bcrypt 5.x |
 | DB | MongoDB Atlas |
+| AI Integration | @google/generative-ai + jsonrepair |
 | Config | dotenv |
 | Dev | nodemon |
 | Deploy | Vercel (backend), Netlify (frontend) |
@@ -259,5 +273,4 @@ Client → GET /api/destinations?page=1&limit=12&trending=true
 
 | Issue | Location | Severity |
 |-------|----------|----------|
-| Missing pagination metadata | `destinations.controller.js` | Low |
 | No advanced input validation library (like Joi/Zod) | All controllers | Medium |

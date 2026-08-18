@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Survey = require('../models/surveyData.model');
 const ErrorResponse = require('../utils/ErrorResponse');
+const { generateAndCacheRecommendations } = require('../services/recommendationHelper');
 
 const submitSurvey = async (req, res, next) => {
     try {
@@ -11,17 +12,27 @@ const submitSurvey = async (req, res, next) => {
 
         const { travelStyle, budget, interests, activities } = req.body;
 
-        await Survey.findOneAndUpdate(
+        const survey = await Survey.findOneAndUpdate(
             { user: userId },
             { user: userId, travelStyle, budget, interests, activities },
             { upsert: true, new: true }
-        );
+        ).lean();
+
+        // Option B: Pre-generate and cache AI recommendations immediately
+        try {
+            await generateAndCacheRecommendations(userId, survey);
+        } catch (aiError) {
+            console.error('Failed to pre-cache AI recommendations on survey submit:', aiError);
+            // We still proceed since the survey was successfully saved in the DB,
+            // but we can log the warning. The recommendations page will retry.
+        }
 
         res.status(201).json({ success: true, message: "Survey submitted successfully" });
     } catch (error) {
         next(error);
     }
 };
+
 
 const getSurvey = async (req, res, next) => {
     try {

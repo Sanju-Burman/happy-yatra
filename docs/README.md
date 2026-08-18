@@ -51,8 +51,9 @@ DELETE /api/saved-destinations/:id  [AUTH] Unsave a destination
 
 POST   /api/survey               [AUTH] Submit travel preferences
 GET    /api/survey               [AUTH] Get user's survey submissions
-
+ 
 GET    /api/recommendations     [AUTH] Get personalized recommendations
+GET    /api/recommendations/ai  [AUTH] Get AI personalized recommendations (cached)
 ```
 
 ### Environment Variables (`.env` in `backend/`)
@@ -62,6 +63,13 @@ MONGO_DB=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/<db>
 JWT_ACCESS_KEY=<strong_secret>
 JWT_REFRESH_KEY=<strong_secret>
 CORS_ORIGIN=http://localhost:5173,https://happyyatra.netlify.app
+
+# Google Gemini AI Configuration
+GEMINI_API_KEY=<api_key>
+GEMINI_MODEL=gemini-flash-latest
+GEMINI_MAX_OUTPUT_TOKENS=8192
+GEMINI_TEMPERATURE=0.7
+GEMINI_CACHE_TTL_HOURS=24
 ```
 
 ---
@@ -91,8 +99,10 @@ CORS_ORIGIN=http://localhost:5173,https://happyyatra.netlify.app
 | 14| N+1 frontend network bug | Parent components batch fetch saved destinations to prevent redundant API calls |
 | 15| Profile page rendering bug | Fixed unwrapping of `savedData.data` array from API wrapper |
 | 16| Auth error messages incorrect | Changed UI to read `.message` instead of `.detail` matching backend contract |
-| 17| Dark mode UI contrast issues | Replaced hardcoded `bg-white/90` and `text-white` with Tailwind semantic variables |
 | 18| Password autofill bug | Prevented eager Chrome autofill on update form via `autoComplete="new-password"` |
+| 19| Gemini API rate limiting & transient 503 outages | Switched to `gemini-flash-latest`, added exponential backoff retries, and candidate fallback models |
+| 20| Broken JSON outputs from Gemini API | Integrated `jsonrepair` to auto-heal truncated output formats |
+| 21| Concurrent AI generation race conditions | Implemented `pendingGenerations` promise deduplication mapping in `recommendationHelper.js` |
 
 ---
 
@@ -111,7 +121,7 @@ cp .env.example .env   # then fill in your values
 npm run dev            # nodemon watches src/server.js → port 9000
 
 # Run tests
-npm test               # runs 28 integration tests via Jest
+npm test               # runs 38 integration tests via Jest
 ```
 
 ---

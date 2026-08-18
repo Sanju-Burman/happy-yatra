@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, MapPin, Users, BarChart2, LogOut, ChevronLeft } from 'lucide-react';
-import { logout } from '@/api.jsx';
+import { useAuth } from '@/contexts/AuthContext';
 
 const sidebarLinks = [
   { to: '/admin',              label: 'Overview',     icon: LayoutDashboard, end: true },
@@ -10,13 +10,12 @@ const sidebarLinks = [
   { to: '/admin/analytics',    label: 'Analytics',    icon: BarChart2 },
 ];
 
-export default function AdminDashboard({ setUser }) {
+export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
-    setUser(null);
-    navigate('/');
   };
 
   return (

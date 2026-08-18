@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Compass, User, LogOut, Sun, Moon, Menu, X, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { logout } from '@/api.jsx';
 import { toast } from 'sonner';
 import { useTheme } from '@/components/theme-provider.jsx';
 import ActionButton from '@/components/ActionButton.jsx';
 
-const Navbar = ({ user, setUser }) => {
+const Navbar = ({ user, onLogout }) => {
   const MotionDiv = motion.div;
-  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
-    setUser(null);
     setIsMobileMenuOpen(false);
+    await onLogout();
     toast.success('Logged out successfully');
-    navigate('/');
   };
 
   const NavLinks = ({ onClick }) => (

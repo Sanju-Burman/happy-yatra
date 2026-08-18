@@ -325,7 +325,7 @@ tokenBlacklistSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 ## 7. Data Flow: Recommendation Engine
 
-### Current State (Live — `recommendations.controller.js`)
+### 7.1 Traditional Recommendation Engine (Live — `recommendations.controller.js`)
 - Route: `GET /api/recommendations` (requires `verifyToken`)
 - Fetches the user's latest `Survey` document (sorted by `createdAt` desc)
 - Builds a MongoDB `$or` query matching `styles` ∋ `travelStyle` OR `tags` ∩ `interests`
@@ -352,6 +352,55 @@ GET /api/recommendations
   │
   res.json({success: true, count, data: recommended})
 ```
+
+---
+
+### 7.2 AI Recommendation Engine (GET /api/recommendations/ai)
+
+- Route: `GET /api/recommendations/ai` (requires `verifyToken`)
+- Integrates Google Gemini AI to return exactly 10 high-quality destinations matching user travel styles, budgets, interests, and activities.
+- Implements request caching using MD5/SHA256 hashing of survey fields. If the survey hasn't changed within the TTL period (default: 24h), cached results are returned instantly.
+- Compares recommended destinations against existing DB records using a case-insensitive name and location lookup. Reuses matching records or inserts new ones.
+- Flow Option B: The survey submission automatically pre-generates and caches recommendations to warm the cache.
+
+```
+Client                         Server                         Gemini AI                        MongoDB
+──────                         ──────                         ─────────                        ───────
+GET /api/recommendations/ai
+  Authorization: Bearer <token>
+         │
+         ▼
+  recommendations.controller.js :: getAiRecommendations()
+         │
+         ├─► Survey.findOne({user: userId}).sort({createdAt:-1}) ────────────────────────────► MongoDB
+         │       ◄ survey data ◄──────────────────────────────────────────────────────────────
+         │
+         ├─ computeSurveyHash(survey) → SHA256 hash
+         │
+         ├─► AiRecommendation.findOne({user: userId, surveyHash}) ───────────────────────────► MongoDB
+         │       ├── ◄ [Cache Hit] cachedIds ◄────────────────────────────────────────────────
+         │       │     └──► Destination.find({_id: {$in: cachedIds}}) ──────► MongoDB
+         │       │              ◄ destinations ◄─────────────────────────────
+         │       │
+         │       └── ◄ [Cache Miss] null ◄────────────────────────────────────────────────────
+         │             │
+         │             ├─► GeminiService.getRecommendations(survey) ────────► Call API
+         │             │       ◄── Array of 10 destinations in JSON ◄─────────
+         │             │
+         │             ├─ Loop for each AI recommended destination:
+         │             │    ├──► Destination.findOne({name, location}) ──────────────────────► MongoDB
+         │             │    │       ├── ◄ [Exists] reuse record ◄─────────────────────────────
+         │             │    │       └── ◄ [New] Destination.create(...) ─────────────────────► MongoDB (INSERT)
+         │             │    └── Collect ID
+         │             │
+         │             └─► AiRecommendation.create({user, surveyHash, destinationIds}) ──────► MongoDB (INSERT)
+         │
+         ├─ Fetch additional DB matches (excluding AI destination IDs) ──────────────────────► MongoDB
+         │       ◄ additionalDestinations ◄───────────────────────────────────────────────────
+         │
+         └─► res.json({ success: true, aiRecommendations, additionalRecommendations, fromCache })
+```
+
 
 ---
 

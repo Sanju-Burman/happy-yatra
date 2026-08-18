@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { getStoredUser, getStoredTokens } from '@/api';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import NavigationService from '@/lib/navigationService';
 import Navbar from '@/components/Navbar.jsx';
 import Landing from '@/pages/Landing.jsx';
 
@@ -20,64 +21,102 @@ const AdminDestinations = React.lazy(() => import('@/pages/admin/AdminDestinatio
 const AdminUsers = React.lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminAnalytics = React.lazy(() => import('@/pages/admin/AdminAnalytics'));
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+// ─── Splash Screen ───────────────────────────────────────────────────────────
+// Shown while AuthContext is validating the stored session on startup.
+// Prevents any protected route from rendering before auth state is resolved.
 
+const SplashScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="text-center">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+      <p className="text-muted-foreground text-sm font-medium">Loading…</p>
+    </div>
+  </div>
+);
+
+// ─── Route Guards ────────────────────────────────────────────────────────────
+// Defined OUTSIDE the App render function so React never unmounts/remounts
+// them on re-renders (avoids the flashing-UI bug from closure recreation).
+
+const ProtectedRoute = ({ children }) => {
+  const { authStatus } = useAuth();
+  if (authStatus === 'loading') return <SplashScreen />;
+  return authStatus === 'authenticated' ? children : <Navigate to="/login" replace />;
+};
+
+const PublicRoute = ({ children }) => {
+  const { authStatus } = useAuth();
+  if (authStatus === 'loading') return <SplashScreen />;
+  return authStatus === 'unauthenticated' ? children : <Navigate to="/" replace />;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user, authStatus } = useAuth();
+  if (authStatus === 'loading') return <SplashScreen />;
+  if (authStatus === 'unauthenticated') return <Navigate to="/login" replace />;
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return children;
+};
+
+// ─── NavigationService Registrar ─────────────────────────────────────────────
+// A tiny component that lives inside <BrowserRouter> so it has access to
+// useNavigate(). It registers the navigate fn with NavigationService once,
+// enabling the Axios interceptor to use client-side routing.
+
+const NavigationRegistrar = () => {
+  const navigate = useNavigate();
   useEffect(() => {
-    const storedUser = getStoredUser();
-    const { accessToken } = getStoredTokens();
+    NavigationService.setNavigate(navigate);
+  }, [navigate]);
+  return null;
+};
 
-    if (storedUser && accessToken) {
-      setUser(storedUser);
-    }
-    setLoading(false);
-  }, []);
+// ─── Router Content ───────────────────────────────────────────────────────────
+// Extracted so that NavigationRegistrar is always rendered inside <BrowserRouter>.
 
-  const ProtectedRoute = ({ children }) => {
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    return user ? children : <Navigate to="/login" />;
-  };
+const AppRoutes = () => {
+  const { user, logout } = useAuth();
 
-  const PublicRoute = ({ children }) => {
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    return !user ? children : <Navigate to="/" />;
-  };
+  return (
+    <>
+      <NavigationRegistrar />
+      <Navbar user={user} onLogout={logout} />
+      <React.Suspense fallback={<SplashScreen />}>
+        <Routes>
+          <Route path="/" element={<Landing user={user} />} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+          <Route path="/survey" element={<ProtectedRoute><Survey /></ProtectedRoute>} />
+          <Route path="/thank-you" element={<ProtectedRoute><ThankYou /></ProtectedRoute>} />
+          <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
+          <Route path="/destination/:id" element={<ProtectedRoute><DestinationDetail /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-  const AdminRoute = ({ user, children }) => {
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    if (!user) return <Navigate to="/login" replace />;
-    if (user.role !== 'admin') return <Navigate to="/" replace />;
-    return children;
-  };
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>}>
+            <Route index element={<AdminAnalytics />} />
+            <Route path="destinations" element={<AdminDestinations />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+          </Route>
+        </Routes>
+      </React.Suspense>
+      <Toaster position="top-right" />
+    </>
+  );
+};
 
+// ─── App Root ─────────────────────────────────────────────────────────────────
+
+function App() {
   return (
     <div className="App relative min-h-screen bg-background text-foreground transition-colors duration-300 z-[1]">
       <BrowserRouter>
-        <Navbar user={user} setUser={setUser} />
-        <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<Landing user={user} />} />
-            <Route path="/login" element={<PublicRoute><Login setUser={setUser} /></PublicRoute>} />
-            <Route path="/signup" element={<PublicRoute><Signup setUser={setUser} /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-            <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
-            <Route path="/survey" element={<ProtectedRoute><Survey /></ProtectedRoute>} />
-            <Route path="/thank-you" element={<ProtectedRoute><ThankYou /></ProtectedRoute>} />
-            <Route path="/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
-            <Route path="/destination/:id" element={<ProtectedRoute><DestinationDetail /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminRoute user={user}><AdminDashboard setUser={setUser} /></AdminRoute>}>
-              <Route index element={<AdminAnalytics />} />
-              <Route path="destinations" element={<AdminDestinations />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="analytics" element={<AdminAnalytics />} />
-            </Route>
-          </Routes>
-        </React.Suspense>
-        <Toaster position="top-right" />
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );

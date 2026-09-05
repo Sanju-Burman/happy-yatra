@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { login } from "@/api.jsx";
+import { login as apiLogin } from "@/api.jsx";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import ActionButton from "@/components/ActionButton.jsx";
 
-const Login = ({ setUser }) => {
+const Login = () => {
   const MotionDiv = motion.div;
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,8 +21,8 @@ const Login = ({ setUser }) => {
     setLoading(true);
 
     try {
-      const data = await login(email, password);
-      setUser(data.user);
+      const data = await apiLogin(email, password);
+      login(data.user, data.access_token, data.refresh_token);
       toast.success("Login successful!");
       navigate("/");
     } catch (error) {

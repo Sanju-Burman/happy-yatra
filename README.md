@@ -54,7 +54,7 @@ happy-yatra/
 
 ## 🚀 Features
 - 📝 Multi-step User Preference Survey (one-page, smooth flow)
-- 🎯 Personalized Destination Recommendations
+- 🤖 Smart AI Destination Recommendations (powered by Google Gemini with structured outputs, auto-repairing parser, backoff retries, and fallback redundancy)
 - 🌍 Interactive Google Map with destination markers (Under Development)
 - 🛡️ JWT Authentication (Login, Signup, Refresh Token Rotation)
 - 📋 Profile Page showing saved destinations
@@ -64,16 +64,21 @@ happy-yatra/
 - 🔄 Reset form after submit + Redirect to Thank You page
 - 🌍 Trending Destinations Section
 - 📱 Fully Responsive Design
-- 🧪 Integration Test Suite (28 tests via Jest + Supertest)
+- 🧪 Integration Test Suite (38 tests via Jest + Supertest)
 - 🔒 Input Validation on all API endpoints (express-validator)
 - 🚪 Secure Logout with server-side token blacklisting
 
 ## 🧐 Design Decisions & Assumptions
-- **One-page survey:** Simplifies user experience
-- **Lazy loading & pagination:** For performance on large datasets
-- **JWT Refresh Tokens:** So users stay logged in securely
-- **Destination Service:** Fetched once and cached globally
-- **Google Map integration:** Enhances visualization of recommended places (Under Development)
+- **One-page survey:** Simplifies user experience.
+- **Lazy loading & pagination:** For performance on large datasets.
+- **JWT Refresh Tokens:** So users stay logged in securely.
+- **Destination Service:** Fetched once and cached globally.
+- **Google Map integration:** Enhances visualization of recommended places (Under Development).
+- **Fault-Tolerant AI Recommendations:**
+  - **Structured JSON Schema Outputs:** Enforces structured outputs via `responseSchema` to guarantee consistent types/structures.
+  - **`jsonrepair` Auto-Healing:** Handles stream-truncation issues where the LLM hits token limits, automatically correcting incomplete strings/JSON objects.
+  - **Deduplicated Request Promises:** A memory cache map merges duplicate concurrent requests for the same survey hash to prevent race conditions and unnecessary API calls.
+  - **High Availability Multi-Model Fallback:** Implements exponential backoff retries (up to 3 times per model) and a list of backup models (`gemini-flash-latest`, `gemini-3.5-flash`, `gemini-3.6-flash`, etc.) to survive quota limitations (429) or transient gateway demand outages (503).
 
 ## 📦 Installation & Getting Started
 
@@ -127,6 +132,7 @@ Headers: { "Authorization": "Bearer <access_token>" }
 
 ## 🔗 APIs Used
 - Google Maps JavaScript API
+- Google Gemini AI API (Generative Language API)
 
 ## 🧹 API Endpoints
 
@@ -154,6 +160,7 @@ Headers: { "Authorization": "Bearer <access_token>" }
 
 ### Recommendations
 - `GET /api/recommendations` — Get personalized destination recommendations
+- `GET /api/recommendations/ai` — Fetch personalized AI-generated destination recommendations (cached)
 
 ---
 
@@ -192,8 +199,8 @@ User                Frontend              Backend                  Database
 
 ## 🛠 Technology Stack
 - **Frontend:** React.js, React Router, Axios, Framer Motion, Lucide Icons, Sonner (Toast)
-- **Backend:** Node.js, Express.js, express-validator, Helmet, express-rate-limit
+- **Backend:** Node.js, Express.js, express-validator, Helmet, express-rate-limit, jsonrepair, @google/generative-ai
 - **Database:** MongoDB Atlas (Mongoose ODM)
 - **Authentication:** JWT (Access Token + Refresh Token with Rotation)
-- **Testing:** Jest, Supertest (28 integration tests)
+- **Testing:** Jest, Supertest (38 integration tests)
 - **Others:** Google Maps API, React Lazy Loading

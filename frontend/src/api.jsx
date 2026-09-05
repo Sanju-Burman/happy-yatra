@@ -1,8 +1,28 @@
 import axios from 'axios';
+import NavigationService from '@/lib/navigationService';
 
 // Use relative path for dev (via Vite proxy), full URL for production
 const apiBase = import.meta.env.VITE_Backend_API || (import.meta.env.DEV ? '/api' : 'http://localhost:9000/api');
 const API = apiBase.replace(/\/+$/, '');
+
+/**
+ * Decode a JWT payload and check whether the token has expired.
+ * This is a CLIENT-SIDE only check (no signature verification).
+ * Used at app startup to avoid treating a stale localStorage token as valid.
+ *
+ * @param {string} token - A JWT string
+ * @returns {boolean} true if the token is expired or unparseable
+ */
+export const isTokenExpired = (token) => {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // exp is in seconds; Date.now() is in milliseconds
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
 
 export const setAuthToken = (token) => {
   if (token) {
@@ -128,7 +148,7 @@ axios.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         clearTokens();
-        window.location.href = '/login';
+        NavigationService.navigate('/login', { replace: true });
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -173,6 +193,12 @@ export const getRecommendations = async () => {
   const response = await axios.get(`${API}/recommendations`);
   return response.data;
 };
+
+export const getAiRecommendations = async () => {
+  const response = await axios.get(`${API}/recommendations/ai`);
+  return response.data;
+};
+
 
 export const getDestinations = async (page = 1, limit = 12, trending = null) => {
   const params = { page, limit };

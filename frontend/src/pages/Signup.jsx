@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signup } from "@/api.jsx";
+import { signup as apiSignup } from "@/api.jsx";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import ActionButton from "@/components/ActionButton.jsx";
 
-const Signup = ({ setUser }) => {
+const Signup = () => {
   const MotionDiv = motion.div;
+  const { login } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,8 +22,8 @@ const Signup = ({ setUser }) => {
     setLoading(true);
 
     try {
-      const data = await signup(email, password, name);
-      setUser(data.user);
+      const data = await apiSignup(email, password, name);
+      login(data.user, data.access_token, data.refresh_token);
       toast.success("Account created successfully!");
       navigate("/survey", { replace: true });
     } catch (error) {

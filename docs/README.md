@@ -103,8 +103,45 @@ GEMINI_CACHE_TTL_HOURS=24
 | 19| Gemini API rate limiting & transient 503 outages | Switched to `gemini-flash-latest`, added exponential backoff retries, and candidate fallback models |
 | 20| Broken JSON outputs from Gemini API | Integrated `jsonrepair` to auto-heal truncated output formats |
 | 21| Concurrent AI generation race conditions | Implemented `pendingGenerations` promise deduplication mapping in `recommendationHelper.js` |
+| 22| Cloudinary module load crash | Made initialization lazy and non-blocking in `cloudinary.js` to prevent startup & test crashes |
+| 23| Missing frontend `recharts` dependency | Installed `recharts` and synchronized `package-lock.json` for the Admin Analytics dashboard |
+| 24| SPA route 404 on page refresh | Added Netlify `_redirects` / `netlify.toml` and Vercel `vercel.json` rewrite configurations |
+| 25| Missing production container configs | Added multi-stage `Dockerfile`, `nginx.conf`, `ecosystem.config.cjs`, and `docker-compose.yml` |
 
 ---
+
+## 🚀 Production Deployment
+
+### 1. Docker Compose (Full Stack)
+```bash
+# Build and run both services in background
+docker compose up -d --build
+
+# View container logs
+docker compose logs -f
+```
+
+### 2. Vercel (Backend) + Netlify (Frontend)
+- **Frontend (Netlify)**:
+  - Build command: `npm run build`
+  - Publish directory: `dist`
+  - Environment variable: `VITE_Backend_API=https://happyatra.vercel.app/api`
+- **Backend (Vercel)**:
+  - Root directory: `backend`
+  - Set production environment variables as shown in `backend/.env.production.example`.
+
+### 3. VPS / Linux Server (PM2 + Nginx)
+```bash
+# Backend with PM2 Cluster Mode
+cd backend
+npm ci --omit=dev
+pm2 start ecosystem.config.cjs --env production
+
+# Frontend with Nginx
+cd ../frontend
+npm ci && npm run build
+# Copy dist contents to /usr/share/nginx/html or /var/www/html
+```
 
 ## 🛠 Local Setup
 

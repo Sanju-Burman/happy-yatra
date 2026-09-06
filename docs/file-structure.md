@@ -6,12 +6,12 @@
 
 ```
 happy-yatra/                          # Monorepo root
-├── README.md                         # Project overview, setup, feature list
-├── package.json                      # Root package.json (likely placeholder)
-├── package-lock.json
+├── README.md                         # Project overview, setup, feature list, deployment
+├── docker-compose.yml                # Unified multi-container production orchestration
 ├── .gitignore
 │
 ├── docs/                             # 📚 All documentation (this folder)
+│   ├── README.md                     # Backend documentation index & status
 │   ├── ai-context.md                 # AI agent optimized context file
 │   ├── api-specification.md          # Full API reference
 │   ├── system-design.md              # Architecture & design decisions
@@ -23,17 +23,28 @@ happy-yatra/                          # Monorepo root
 ├── backend/                          # Node.js + Express backend
 │   ├── package.json                  # Backend dependencies
 │   ├── package-lock.json
-│   ├── .gitignore
+│   ├── Dockerfile                    # Production Dockerfile (node:20-alpine runner)
+│   ├── .dockerignore
+│   ├── ecosystem.config.cjs          # PM2 cluster configuration for VPS
+│   ├── .env.example                  # Local environment template
+│   ├── .env.production.example       # Production environment template
 │   ├── jest.config.js                # Jest test configuration
 │   ├── vercel.json                   # Vercel serverless deployment config
-│   ├── tests/                        # Integration test suite
+│   ├── api/
+│   │   └── index.js                  # Vercel serverless function entry
+│   ├── scripts/                      # Database & utility scripts
+│   │   ├── seed_destinations.js      # Seed initial destination catalog
+│   │   └── explore_data.js           # Query and inspect MongoDB collections
+│   ├── tests/                        # Integration test suite (38 tests)
 │   │   ├── setup.js                  # Test DB connection helper
 │   │   ├── globalSetup.js            # Drops test DB before each run
 │   │   ├── auth.test.js              # Auth endpoint tests (11 tests)
 │   │   ├── saved-destinations.test.js # Save/unsave tests (10 tests)
-│   │   └── survey.test.js            # Survey endpoint tests (7 tests)
+│   │   ├── survey.test.js            # Survey endpoint tests (7 tests)
+│   │   ├── ai-recommendations.test.js# Gemini AI recommendations tests (3 tests)
+│   │   └── password-management.test.js# Forgot/reset password tests (7 tests)
 │   └── src/                          # All source code
-│       ├── server.js                 # LOCAL ONLY — HTTP server entry (listen())
+│       ├── server.js                 # HTTP server entry (listen())
 │       ├── app.js                    # Express app factory — CORS, routes, global error handler
 │       ├── config/
 │       │   └── db.js                 # MongoDB connection via mongoose
@@ -44,9 +55,12 @@ happy-yatra/                          # Monorepo root
 │       │   └── tokenBlocking.model.js # TokenBlacklist collection (TTL)
 │       ├── middlewares/
 │       │   ├── Auth.middleware.js    # verifyToken, adminChecks
-│       │   └── error.js             # Global error handler middleware
+│       │   ├── upload.middleware.js  # Multer + sharp image processing
+│       │   └── error.js              # Global error handler middleware
 │       ├── services/
-│       │   └── auth.service.js       # login, signup, refresh, blacklistTokens
+│       │   ├── auth.service.js       # login, signup, refresh, blacklistTokens
+│       │   ├── gemini.service.js     # Google Gemini API client with fallback
+│       │   └── recommendationHelper.js # Recommendation caching & deduplication
 │       ├── controllers/
 │       │   ├── auth.controller.js    # Handles /api/auth/* HTTP layer
 │       │   ├── user.controller.js    # Handles /api/user/* HTTP layer
@@ -64,13 +78,27 @@ happy-yatra/                          # Monorepo root
 │       │   ├── recommendations.routes.js   # Maps /api/recommendations → recommendations.controller
 │       │   └── admin.routes.js       # Maps /api/admin → admin.controller
 │       └── utils/
-│           └── ErrorResponse.js      # Custom error class with statusCode
+│           ├── ErrorResponse.js      # Custom error class with statusCode
+│           ├── cloudinary.js         # Cloudinary configuration & upload helpers
+│           └── logger.js             # Winston structured logging
 │
-└── frontend/                         # React.js frontend
+└── frontend/                         # React.js (Vite) frontend
     ├── package.json
+    ├── package-lock.json
+    ├── Dockerfile                    # Multi-stage Dockerfile (Vite build -> Nginx)
+    ├── .dockerignore
+    ├── nginx.conf                    # Production Nginx configuration (gzip, headers, SPA fallback)
+    ├── netlify.toml                  # Netlify build, routing, and header configuration
+    ├── vercel.json                   # Vercel SPA rewrites
+    ├── .env.example                  # Local environment template
+    ├── .env.production.example       # Production environment template
+    ├── vite.config.js                # Vite build configuration with terser & compression
+    ├── public/
+    │   ├── _redirects                # Netlify SPA routing rules
+    │   └── ... (icons, logos)
     └── src/
         ├── App.jsx                   # Root component + routing
-        ├── api.jsx                   # Axios API call wrappers
+        ├── api.jsx                   # Axios API call wrappers & token refresh interceptors
         ├── components/               # Reusable UI components
         ├── pages/                    # Route-level page components
         ├── hooks/                    # Custom React hooks

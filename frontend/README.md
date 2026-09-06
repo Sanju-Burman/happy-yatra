@@ -27,8 +27,15 @@ frontend/
 │   ├── App.jsx           # Main application shell and layout
 │   ├── index.css         # Tailwind 4 configuration and global variables
 │   └── main.jsx          # Application entry point with Providers
-├── public/               # Static assets
-├── .env                  # Environment variables
+├── public/
+│   ├── _redirects        # Netlify SPA client routing rewrite rule
+│   └── ... (icons, logos)
+├── Dockerfile            # Multi-stage production container build (Vite -> Nginx)
+├── nginx.conf            # Production Nginx reverse proxy & static file server
+├── netlify.toml          # Netlify build, redirect, and caching header configuration
+├── vercel.json           # Vercel SPA routing rewrite configuration
+├── .env.example          # Local environment template
+├── .env.production.example # Production environment template
 ├── vite.config.js        # Vite & Tailwind 4 plugin configuration
 └── package.json          # Project dependencies and scripts
 ```
@@ -84,9 +91,24 @@ Happy Yatraa features a premium, modern design tailored for a seamless travel pl
 
 ## 📦 Deployment
 
-The project is configured for a standard Vite build process:
+### Option 1: Netlify Deployment
+- **Build Command**: `npm run build`
+- **Publish Directory**: `dist`
+- **Configuration**: Managed automatically via `netlify.toml` and `public/_redirects` to avoid 404s on route refreshes and enforce caching headers on assets.
+- **Environment Variables**: Add `VITE_Backend_API` and `VITE_GOOGLE_MAPS_API_KEY` in the Netlify site settings.
+
+### Option 2: Vercel Deployment
+- **Framework Preset**: Vite
+- **Output Directory**: `dist`
+- **Configuration**: Client routing rewrites are configured in `vercel.json`.
+
+### Option 3: Docker & Nginx
 ```bash
-npm run build
+# Build the production image
+docker build -t happy-yatra-frontend .
+
+# Run on port 80
+docker run -d -p 80:80 --name happy-yatra-frontend happy-yatra-frontend
 ```
 
 ### 🛠️ Netlify/Linux Build Stability

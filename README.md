@@ -15,6 +15,7 @@ This project solves the problem of overwhelming choices by offering smart, tailo
 ## 📂 Directory Structure
 ```
 happy-yatra/
+├── docker-compose.yml
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/
@@ -30,20 +31,33 @@ happy-yatra/
 │   │   ├── auth.test.js
 │   │   ├── saved-destinations.test.js
 │   │   ├── survey.test.js
-│   │   ├── setup.js
-│   │   └── globalSetup.js
-│   └── jest.config.js
+│   │   ├── ai-recommendations.test.js
+│   │   └── password-management.test.js
+│   ├── Dockerfile
+│   ├── ecosystem.config.cjs
+│   ├── .env.example
+│   ├── .env.production.example
+│   ├── jest.config.js
+│   └── vercel.json
 ├── frontend/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── hooks/
-│       ├── lib/
-│       ├── api.jsx
-│       └── App.jsx
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── hooks/
+│   │   ├── lib/
+│   │   ├── api.jsx
+│   │   └── App.jsx
+│   ├── public/
+│   │   └── _redirects
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── netlify.toml
+│   ├── vercel.json
+│   ├── .env.example
+│   ├── .env.production.example
+│   └── vite.config.js
 ├── docs/
-├── README.md
-└── ...
+└── README.md
 ```
 
 ## 🎥 Video Walkthrough
@@ -106,6 +120,52 @@ npm run dev
 
 - Ensure you configure `.env` variables like MongoDB URI, JWT_SECRET, etc.
 - MongoDB collections are created automatically when inserting destinations or users.
+
+## 🧪 Testing & Verification
+
+```bash
+# Run backend integration tests (38 tests)
+cd backend
+npm test
+
+# Build frontend production bundle
+cd ../frontend
+npm run build
+```
+
+## 🚀 Production Deployment
+
+### Option 1: Docker Compose (Full Stack Orchestration)
+```bash
+# Run multi-container deployment
+docker compose up -d --build
+
+# Check running services
+docker compose ps
+```
+
+### Option 2: Cloud Deployment (Vercel + Netlify)
+- **Frontend (Netlify)**:
+  - Connect your repository to Netlify.
+  - Set Build command: `npm run build` and Publish directory: `dist`.
+  - Set environment variable: `VITE_Backend_API=https://happyatra.vercel.app/api`.
+  - Client-side SPA routing is pre-configured via `public/_redirects` and `netlify.toml`.
+- **Backend (Vercel)**:
+  - Connect `backend/` to Vercel.
+  - Set environment variables as documented in `backend/.env.production.example`.
+
+### Option 3: VPS / Linux Server (PM2 + Nginx)
+```bash
+# Start backend in cluster mode
+cd backend
+npm ci --omit=dev
+pm2 start ecosystem.config.cjs --env production
+
+# Build and serve frontend via Nginx
+cd ../frontend
+npm ci && npm run build
+# Dist contents are served using the provided frontend/nginx.conf
+```
 
 ## 🛠 Usage Example
 
